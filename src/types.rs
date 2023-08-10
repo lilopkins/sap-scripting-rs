@@ -4,6 +4,35 @@ use crate::idispatch_ext::IDispatchExt;
 use crate::traits::*;
 use crate::variant_ext::VariantExt;
 
+macro_rules! forward_func {
+    ($(#[$attr:meta])* => $snake_name: ident, $name: expr) => {
+        $(#[$attr])*
+        pub fn $snake_name(&self) -> crate::Result<()> {
+            let _ = self.inner.call($name, vec![])?;
+            Ok(())
+        }
+    };
+}
+
+macro_rules! forward_func_1_arg {
+    ($(#[$attr:meta])* => $snake_name: ident, $name: expr, $arg_name: ident, $arg_ty: ty, $arg_transformer: ident) => {
+        $(#[$attr])*
+        pub fn $snake_name(&self, $arg_name: $arg_ty) -> crate::Result<()> {
+            let _ = self.inner.call($name, vec![VARIANT::$arg_transformer($arg_name)])?;
+            Ok(())
+        }
+    };
+}
+
+macro_rules! get_property {
+    ($(#[$attr:meta])* => $snake_name: ident, $name: expr, $kind: ty, $transformer: ident) => {
+        $(#[$attr])*
+        pub fn $snake_name(&self) -> crate::Result<$kind> {
+            Ok(self.inner.get($name)?.$transformer()?)
+        }
+    };
+}
+
 /// A wrapper over the SAP scripting engine, equivalent to CSapROTWrapper.
 pub struct SAPWrapper {
     inner: IDispatch,
@@ -462,39 +491,27 @@ pub struct GuiButton {
 }
 
 impl GuiButton {
-    /// This emulates manually pressing a button. Pressing a button will always cause server
-    /// communication to occur, rendering all references to elements below the window level
-    /// invalid.
-    pub fn press(&self) -> crate::Result<()> {
-        let _ = self.inner.call("Press", vec![])?;
-        Ok(())
+    forward_func! {
+        /// This emulates manually pressing a button. Pressing a button will always cause server
+        /// communication to occur, rendering all references to elements below the window level
+        /// invalid.
+        => press, "Press"
     }
-
-    /// This property is True if the button is displayed emphasized (in Fiori Visual Themes:
-    /// The leftmost button in the footer and buttons configured as
-    /// "Fiori Usage D Display<->Change").
-    pub fn emphasized(&self) -> crate::Result<bool> {
-        Ok(self.inner.get("Emphasized")?.to_bool()?)
+    get_property! {
+        /// This property is True if the button is displayed emphasized (in Fiori Visual Themes:
+        /// The leftmost button in the footer and buttons configured as
+        /// "Fiori Usage D Display<->Change").
+        => emphasized, "Emphasized", bool, to_bool
     }
-
-    /// Left label of the GuiButton. The label is assigned in the Screen Painter, using the flag
-    /// 'assign left'.
-    pub fn left_label(&self) -> crate::Result<SAPComponent> {
-        let v = self.inner.get("LeftLabel")?;
-        let comp = v.to_idispatch()?;
-        Ok(SAPComponent::from(GuiComponent {
-            inner: comp.clone(),
-        }))
+    get_property! {
+        /// Left label of the GuiButton. The label is assigned in the Screen Painter, using the flag
+        /// 'assign left'.
+        => left_label, "LeftLabel", SAPComponent, to_sap_component
     }
-
-    /// Right label of the GuiButton. This property is set in Screen Painter using the 'assign
-    /// right' flag.
-    pub fn right_label(&self) -> crate::Result<SAPComponent> {
-        let v = self.inner.get("RightLabel")?;
-        let comp = v.to_idispatch()?;
-        Ok(SAPComponent::from(GuiComponent {
-            inner: comp.clone(),
-        }))
+    get_property! {
+        /// Right label of the GuiButton. This property is set in Screen Painter using the 'assign
+        /// right' flag.
+        => right_label, "RightLabel", SAPComponent, to_sap_component
     }
 }
 impl HasDispatch for GuiButton {
@@ -538,25 +555,18 @@ pub struct GuiFrameWindow {
 impl GuiFrameWindow {
     // TODO Implement the rest
 
-    /// The function attempts to close the window. Trying to close the last main window of a session
-    /// will not succeed immediately; the dialog ‘Do you really want to log off?’ will be displayed
-    /// first.
-    pub fn close(&self) -> crate::Result<()> {
-        let _ = self.inner.call("Close", vec![])?;
-        Ok(())
+    forward_func! {
+        /// The function attempts to close the window. Trying to close the last main window of a session will not succeed immediately; the dialog ‘Do you really want to log off?’ will be displayed first.
+        => close, "Close"
     }
-
-    /// This will maximize a window. It is not possible to maximize a modal window; it is always the
-    /// main window which will be maximized.
-    pub fn maximize(&self) -> crate::Result<()> {
-        let _ = self.inner.call("Maximize", vec![])?;
-        Ok(())
+    forward_func! {
+        /// This will maximize a window. It is not possible to maximize a modal window; it is always the
+        /// main window which will be maximized.
+        => maximize, "Maximize"
     }
-
-    /// The virtual key VKey is executed on the window. The VKeys are defined in the menu painter.
-    pub fn send_vkey(&self, vkey: i32) -> crate::Result<()> {
-        let _ = self.inner.call("SendVKey", vec![VARIANT::from_i32(vkey)])?;
-        Ok(())
+    forward_func_1_arg! {
+        /// The virtual key VKey is executed on the window. The VKeys are defined in the menu painter.
+        => send_vkey, "SendVKey", vkey, i32, from_i32
     }
 }
 impl HasDispatch for GuiFrameWindow {
@@ -578,13 +588,13 @@ pub struct GuiOkCodeField {
 }
 
 impl GuiOkCodeField {
-    /// In SAP GUI designs newer than Classic design the GuiOkCodeField can be collapsed using the arrow
-    /// button to the right of it. In SAP GUI for Windows the GuiOkCodeField may also be collapsed via a
-    /// setting in the Windows registry.
-    ///
-    /// This property contains False is the GuiOkCodeField is collapsed.
-    pub fn opened(&self) -> crate::Result<bool> {
-        Ok(self.inner.get("Opened")?.to_bool()?)
+    get_property! {
+        /// In SAP GUI designs newer than Classic design the GuiOkCodeField can be collapsed using the arrow
+        /// button to the right of it. In SAP GUI for Windows the GuiOkCodeField may also be collapsed via a
+        /// setting in the Windows registry.
+        ///
+        /// This property contains False is the GuiOkCodeField is collapsed.
+        => opened, "Opened", bool, to_bool
     }
 }
 impl HasDispatch for GuiOkCodeField {

@@ -9,6 +9,8 @@ use windows::{
     },
 };
 
+use crate::{SAPComponent, types::GuiComponent};
+
 pub(crate) trait VariantExt {
     fn null() -> VARIANT;
     fn from_i32(n: i32) -> VARIANT;
@@ -20,6 +22,7 @@ pub(crate) trait VariantExt {
     fn to_string(&self) -> core::Result<String>;
     fn to_bool(&self) -> core::Result<bool>;
     fn to_idispatch(&self) -> core::Result<&IDispatch>;
+    fn to_sap_component(&self) -> core::Result<SAPComponent>;
 }
 
 impl VariantExt for VARIANT {
@@ -109,5 +112,10 @@ impl VariantExt for VARIANT {
             let idisp = v00.Anonymous.pdispVal.as_ref().unwrap();
             Ok(idisp)
         }
+    }
+    fn to_sap_component(&self) -> core::Result<SAPComponent> {
+        Ok(SAPComponent::from(GuiComponent {
+            inner: self.to_idispatch()?.clone(),
+        }))
     }
 }
