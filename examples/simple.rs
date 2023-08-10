@@ -37,10 +37,22 @@ fn main() -> Result<()> {
     eprintln!("Got scripting engine");
     let connection = engine.get_connection(0)?;
     eprintln!("Got connection");
-    let session = connection.get_session()?;
+    let session = connection.children(0)?;
     eprintln!("Got session");
-    let tbox_comp = session.find_by_id("wnd[0]/tbar[0]/okcd")?;
-    println!("Tbox comp type: {}", tbox_comp.kind()?);
+    if let SAPComponent::GuiMainWindow(wnd) = session.find_by_id("wnd[0]")? {
+        wnd.maximize().unwrap();
+
+        if let SAPComponent::GuiOkCodeField(tbox_comp) =
+            session.find_by_id("wnd[0]/tbar[0]/okcd")?
+        {
+            tbox_comp.set_text("/nfpl9").unwrap();
+            wnd.send_vkey(0).unwrap();
+        } else {
+            panic!("no ok code field!");
+        }
+    } else {
+        panic!("no window!");
+    }
 
     Ok(())
 }

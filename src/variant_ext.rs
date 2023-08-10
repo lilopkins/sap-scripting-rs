@@ -12,9 +12,11 @@ use windows::{
 pub(crate) trait VariantExt {
     fn null() -> VARIANT;
     fn from_i32(n: i32) -> VARIANT;
+    fn from_i64(n: i64) -> VARIANT;
     fn from_str(s: &str) -> VARIANT;
     fn from_bool(b: bool) -> VARIANT;
     fn to_i32(&self) -> core::Result<i32>;
+    fn to_i64(&self) -> core::Result<i64>;
     fn to_string(&self) -> core::Result<String>;
     fn to_bool(&self) -> core::Result<bool>;
     fn to_idispatch(&self) -> core::Result<&IDispatch>;
@@ -33,6 +35,14 @@ impl VariantExt for VARIANT {
         let mut v00 = VARIANT_0_0::default();
         v00.vt = VT_I4;
         v00.Anonymous.lVal = n;
+        variant.Anonymous.Anonymous = ManuallyDrop::new(v00);
+        variant
+    }
+    fn from_i64(n: i64) -> VARIANT {
+        let mut variant = VARIANT::default();
+        let mut v00 = VARIANT_0_0::default();
+        v00.vt = VT_I4;
+        v00.Anonymous.llVal = n;
         variant.Anonymous.Anonymous = ManuallyDrop::new(v00);
         variant
     }
@@ -59,6 +69,16 @@ impl VariantExt for VARIANT {
             VariantChangeType(&mut new, self, 0, VT_I4)?;
             let v00 = &new.Anonymous.Anonymous;
             let n = v00.Anonymous.lVal;
+            VariantClear(&mut new)?;
+            Ok(n)
+        }
+    }
+    fn to_i64(&self) -> core::Result<i64> {
+        unsafe {
+            let mut new = VARIANT::default();
+            VariantChangeType(&mut new, self, 0, VT_I4)?;
+            let v00 = &new.Anonymous.Anonymous;
+            let n = v00.Anonymous.llVal;
             VariantClear(&mut new)?;
             Ok(n)
         }

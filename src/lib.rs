@@ -1,14 +1,27 @@
+#![warn(missing_docs)]
+
+//! SAP Scripting for Rust
+//!
+//! See the examples for how to use this library.
+
 use windows::Win32::System::Com::*;
 
-mod types;
-pub use types::*;
-
 mod idispatch_ext;
+/// The methods available are exposed through traits.
+pub mod traits;
+/// The types from this library.
+pub mod types;
 mod utils;
 mod variant_ext;
 
+pub use traits::*;
+pub use types::SAPComponent;
+use types::*;
+
+/// A result of a call.
 pub type Result<T> = ::windows::core::Result<T>;
 
+/// An instance of a COM session. This should be kept whilst a connection to SAP is used.
 pub struct SAPComInstance;
 
 impl SAPComInstance {
@@ -21,7 +34,7 @@ impl SAPComInstance {
         Ok(SAPComInstance)
     }
 
-    // Create an instance of the SAP wrapper
+    /// Create an instance of the SAP wrapper
     pub fn sap_wrapper(&self) -> Result<SAPWrapper> {
         log::debug!("New CSapROTWrapper object generating.");
         SAPWrapper::new()
