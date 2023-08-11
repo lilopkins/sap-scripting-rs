@@ -35,7 +35,7 @@ fn main() -> Result<()> {
     eprintln!("Got wrapper");
     let engine = wrapper.scripting_engine()?;
     eprintln!("Got scripting engine");
-    let connection = engine.get_connection(0)?;
+    let connection = engine.children(0)?;
     eprintln!("Got connection");
     let session = connection.children(0)?;
     eprintln!("Got session");
@@ -45,7 +45,7 @@ fn main() -> Result<()> {
         if let SAPComponent::GuiOkCodeField(tbox_comp) =
             session.find_by_id("wnd[0]/tbar[0]/okcd")?
         {
-            tbox_comp.set_text("/nfpl9").unwrap();
+            tbox_comp.set_text("/nfpl9".to_owned()).unwrap();
             wnd.send_vkey(0).unwrap();
         } else {
             panic!("no ok code field!");
