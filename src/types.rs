@@ -4,6 +4,61 @@ use crate::idispatch_ext::IDispatchExt;
 use crate::traits::*;
 use crate::variant_ext::VariantExt;
 
+macro_rules! type_struct {
+    ($(#[$attr:meta])* => $name: ident: $($trait: ident,)*) => {
+        $(#[$attr])*
+        pub struct $name {
+            pub(crate) inner: IDispatch,
+        }
+
+        impl HasDispatch for $name {
+            fn get_idispatch(&self) -> &IDispatch {
+                &self.inner
+            }
+        }
+        $(impl $trait for $name {})*
+    };
+}
+
+macro_rules! forward_func {
+    ($(#[$attr:meta])* => $snake_name: ident, $name: expr) => {
+        $(#[$attr])*
+        pub fn $snake_name(&self) -> crate::Result<()> {
+            let _ = self.inner.call($name, vec![])?;
+            Ok(())
+        }
+    };
+}
+
+macro_rules! forward_func_1_arg {
+    ($(#[$attr:meta])* => $snake_name: ident, $name: expr, $arg_name: ident, $arg_ty: ty, $arg_transformer: ident) => {
+        $(#[$attr])*
+        pub fn $snake_name(&self, $arg_name: $arg_ty) -> crate::Result<()> {
+            let _ = self.inner.call($name, vec![VARIANT::$arg_transformer($arg_name)])?;
+            Ok(())
+        }
+    };
+}
+
+macro_rules! get_property {
+    ($(#[$attr:meta])* => $snake_name: ident, $name: expr, $kind: ty, $transformer: ident) => {
+        $(#[$attr])*
+        pub fn $snake_name(&self) -> crate::Result<$kind> {
+            Ok(self.inner.get($name)?.$transformer()?)
+        }
+    };
+}
+
+macro_rules! set_property {
+    ($(#[$attr:meta])* => $snake_name: ident, $name: expr, $kind: ty, $transformer: ident) => {
+        $(#[$attr])*
+        pub fn $snake_name(&self, value: $kind) -> crate::Result<()> {
+            let _ = self.inner.set($name, VARIANT::$transformer(value))?;
+            Ok(())
+        }
+    };
+}
+
 /// A wrapper over the SAP scripting engine, equivalent to CSapROTWrapper.
 pub struct SAPWrapper {
     inner: IDispatch,
@@ -71,7 +126,7 @@ pub enum SAPComponent {
     GuiChart(GuiVComponent), //(GuiChart),
     /// GuiCheckBox extends the GuiVComponent Object. The type prefix is chk, the name is the fieldname taken
     /// from the SAP data dictionary.
-    GuiCheckBox(GuiVComponent), //(GuiCheckBox),
+    GuiCheckBox(GuiCheckBox),
     /// GuiColorSelector displays a set of colors for selection. It extends the GuiShell Object.
     GuiColorSelector(GuiVComponent), //(GuiColorSelector),
     /// The GuiComboBox looks somewhat similar to GuiCTextField, but has a completely different implementation.
@@ -80,7 +135,7 @@ pub enum SAPComponent {
     /// the selection is done solely on the client. GuiComboBox extends the GuiVComponent Object. The type prefix
     /// is cmb, the name is the fieldname taken from the SAP data dictionary. GuiComboBox inherits from the
     /// GuiVComponent Object.
-    GuiComboBox(GuiVComponent), //(GuiComboBox),
+    GuiComboBox(GuiComboBox),
     ///
     GuiComboBoxControl(GuiVComponent), //(GuiComboBoxControl),
     /// Members of the Entries collection of a GuiComboBox are of type GuiComBoxEntry.
@@ -101,7 +156,7 @@ pub enum SAPComponent {
     ///
     /// There are no other differences between GuiTextField and GuiCTextField. GuiCTextField extends the GuiTextField.
     /// The type prefix is ctxt, the name is the Fieldname taken from the SAP data dictionary.
-    GuiCTextField(GuiVComponent), //(GuiCTextField),
+    GuiCTextField(GuiCTextField),
     /// The GuiCustomControl is a wrapper object that is used to place ActiveX controls onto dynpro screens. While
     /// GuiCustomControl is a dynpro element itself, its children are of GuiContainerShell type, which is a container
     /// for controls. GuiCustomControl extends the GuiVContainer Object. The type prefix is cntl, the name is the
@@ -140,16 +195,16 @@ pub enum SAPComponent {
     /// SAP data dictionary.
     GuiLabel(GuiVComponent), //(GuiLabel),
     /// This window represents the main window of an SAP GUI session.
-    GuiMainWindow(GuiFrameWindow), //(GuiMainWindow),
+    GuiMainWindow(GuiMainWindow), //(GuiMainWindow),
     /// For the map control only basic members from GuiShell are available. Recording and playback is not possible.
     GuiMap(GuiVComponent), //(GuiMap),
     /// A GuiMenu may have other GuiMenu objects as children. GuiMenu extends the GuiVContainer Object. The type prefix
     /// is menu, the name is the text of the menu item. If the item does not have a text, which is the case for
     /// separators, then the name is the last part of the id, menu[n].
-    GuiMenu(GuiVComponent), //(GuiMenu),
+    GuiMenu(GuiMenu),
     /// Only the main window has a menubar. The children of the menubar are menus. GuiMenubar extends the GuiVContainer
     /// Object. The type prefix and name are mbar.
-    GuiMenubar(GuiVComponent), //(GuiMenubar),
+    GuiMenubar(GuiMenubar),
     /// A GuiModalWindow is a dialog pop-up.
     GuiModalWindow(GuiVComponent), //(GuiModalWindow),
     /// The GuiNetChart is a powerful tool to display and modify entity relationship diagrams. It is of a very technical
@@ -175,7 +230,7 @@ pub enum SAPComponent {
     GuiPicture(GuiVComponent), //(GuiPicture),
     /// GuiRadioButton extends the GuiVComponent Object. The type prefix is rad, the name is the fieldname taken from the
     /// SAP data dictionary.
-    GuiRadioButton(GuiVComponent), //(GuiRadioButton),
+    GuiRadioButton(GuiRadioButton),
     /// For the SAP chart control only basic members from GuiShell are available. Recording and playback is not possible.
     GuiSapChart(GuiVComponent), //(GuiSapChart),
     /// The GuiScrollbar class is a utility class used for example in GuiScrollContainer or GuiTableControl.
@@ -222,6 +277,9 @@ pub enum SAPComponent {
     /// the possibility of protecting text parts against editing by the user is especially useful. GuiTextedit extends the
     /// GuiShell Object.
     GuiTextedit(GuiVComponent), //(GuiTextedit),
+    /// GuiTextField extends the GuiVComponent Object. The type prefix is txt, the name is the fieldname taken from the
+    /// SAP data dictionary.
+    GuiTextField(GuiTextField),
     /// The titlebar is only displayed and exposed as a separate object in New Visual Design mode. GuiTitlebar extends the
     /// GuiVContainer Object. The type prefix and name of GuiTitlebar are titl.
     GuiTitlebar(GuiVComponent), //(GuiTitlebar),
@@ -267,11 +325,11 @@ impl From<GuiComponent> for SAPComponent {
                 "GuiButton" => SAPComponent::GuiButton(GuiButton { inner: value.inner }),
                 "GuiCalendar" => SAPComponent::GuiCalendar(value.into_vcomponent_unchecked()),
                 "GuiChart" => SAPComponent::GuiChart(value.into_vcomponent_unchecked()),
-                "GuiCheckBox" => SAPComponent::GuiCheckBox(value.into_vcomponent_unchecked()),
+                "GuiCheckBox" => SAPComponent::GuiCheckBox(GuiCheckBox { inner: value.inner }),
                 "GuiColorSelector" => {
                     SAPComponent::GuiColorSelector(value.into_vcomponent_unchecked())
                 }
-                "GuiComboBox" => SAPComponent::GuiComboBox(value.into_vcomponent_unchecked()),
+                "GuiComboBox" => SAPComponent::GuiComboBox(GuiComboBox { inner: value.inner }),
                 "GuiComboBoxControl" => {
                     SAPComponent::GuiComboBoxControl(value.into_vcomponent_unchecked())
                 }
@@ -283,7 +341,7 @@ impl From<GuiComponent> for SAPComponent {
                 "GuiContainerShell" => {
                     SAPComponent::GuiContainerShell(value.into_vcomponent_unchecked())
                 }
-                "GuiCTextField" => SAPComponent::GuiCTextField(value.into_vcomponent_unchecked()),
+                "GuiCTextField" => SAPComponent::GuiCTextField(GuiCTextField { inner: value.inner }),
                 "GuiCustomControl" => {
                     SAPComponent::GuiCustomControl(value.into_vcomponent_unchecked())
                 }
@@ -301,10 +359,10 @@ impl From<GuiComponent> for SAPComponent {
                     SAPComponent::GuiInputFieldControl(value.into_vcomponent_unchecked())
                 }
                 "GuiLabel" => SAPComponent::GuiLabel(value.into_vcomponent_unchecked()),
-                "GuiMainWindow" => SAPComponent::GuiMainWindow(GuiFrameWindow { inner: value.inner, }),
+                "GuiMainWindow" => SAPComponent::GuiMainWindow(GuiMainWindow { inner: value.inner, }),
                 "GuiMap" => SAPComponent::GuiMap(value.into_vcomponent_unchecked()),
-                "GuiMenu" => SAPComponent::GuiMenu(value.into_vcomponent_unchecked()),
-                "GuiMenubar" => SAPComponent::GuiMenubar(value.into_vcomponent_unchecked()),
+                "GuiMenu" => SAPComponent::GuiMenu(GuiMenu { inner: value.inner }),
+                "GuiMenubar" => SAPComponent::GuiMenubar(GuiMenubar { inner: value.inner }),
                 "GuiModalWindow" => SAPComponent::GuiModalWindow(value.into_vcomponent_unchecked()),
                 "GuiNetChart" => SAPComponent::GuiNetChart(value.into_vcomponent_unchecked()),
                 "GuiOfficeIntegration" => {
@@ -317,7 +375,7 @@ impl From<GuiComponent> for SAPComponent {
                     SAPComponent::GuiPasswordField(value.into_vcomponent_unchecked())
                 }
                 "GuiPicture" => SAPComponent::GuiPicture(value.into_vcomponent_unchecked()),
-                "GuiRadioButton" => SAPComponent::GuiRadioButton(value.into_vcomponent_unchecked()),
+                "GuiRadioButton" => SAPComponent::GuiRadioButton(GuiRadioButton { inner: value.inner }),
                 "GuiSapChart" => SAPComponent::GuiSapChart(value.into_vcomponent_unchecked()),
                 "GuiScrollbar" => SAPComponent::GuiScrollbar(value.into_vcomponent_unchecked()),
                 "GuiScrollContainer" => {
@@ -340,6 +398,7 @@ impl From<GuiComponent> for SAPComponent {
                 }
                 "GuiTabStrip" => SAPComponent::GuiTabStrip(value.into_vcomponent_unchecked()),
                 "GuiTextedit" => SAPComponent::GuiTextedit(value.into_vcomponent_unchecked()),
+                "GuiTextField" => SAPComponent::GuiTextField(GuiTextField { inner: value.inner }),
                 "GuiTitlebar" => SAPComponent::GuiTitlebar(value.into_vcomponent_unchecked()),
                 "GuiToolbar" => SAPComponent::GuiToolbar(value.into_vcomponent_unchecked()),
                 "GuiTree" => SAPComponent::GuiTree(value.into_vcomponent_unchecked()),
@@ -357,12 +416,12 @@ impl From<GuiComponent> for SAPComponent {
     }
 }
 
-/// The GuiApplication represents the process in which all SAP GUI activity takes place. If the scripting
-/// component is accessed by attaching to an SAP Logon process, then GuiApplication will represent SAP
-/// Logon. GuiApplication is a creatable class. However, there must be only one component of this type in
-/// any process. GuiApplication extends the GuiContainer Object.
-pub struct GuiApplication {
-    inner: IDispatch,
+type_struct! {
+    /// The GuiApplication represents the process in which all SAP GUI activity takes place. If the scripting
+    /// component is accessed by attaching to an SAP Logon process, then GuiApplication will represent SAP
+    /// Logon. GuiApplication is a creatable class. However, there must be only one component of this type in
+    /// any process. GuiApplication extends the GuiContainer Object.
+    => GuiApplication: GuiComponentMethods, GuiContainerMethods,
 }
 
 impl GuiApplication {
@@ -394,29 +453,15 @@ impl GuiApplication {
         })
     }
 }
-impl HasDispatch for GuiApplication {
-    fn get_idispatch(&self) -> &IDispatch {
-        &self.inner
-    }
-}
-impl GuiComponentMethods for GuiApplication {}
-impl GuiContainerMethods for GuiApplication {}
 
-/// A GuiConnection represents the connection between SAP GUI and an application server. Connections can be
-/// opened from SAP Logon or from GuiApplication’s openConnection and openConnectionByConnectionString
-/// methods. GuiConnection extends the GuiContainer Object. The type prefix for GuiConnection is con, the
-/// name is con plus the connection number in square brackets.
-pub struct GuiConnection {
-    inner: IDispatch,
+type_struct! {
+    /// A GuiConnection represents the connection between SAP GUI and an application server. Connections can be
+    /// opened from SAP Logon or from GuiApplication’s openConnection and openConnectionByConnectionString
+    /// methods. GuiConnection extends the GuiContainer Object. The type prefix for GuiConnection is con, the
+    /// name is con plus the connection number in square brackets.
+    => GuiConnection: GuiContainerMethods, GuiComponentMethods,
 }
 
-impl HasDispatch for GuiConnection {
-    fn get_idispatch(&self) -> &IDispatch {
-        &self.inner
-    }
-}
-impl GuiContainerMethods for GuiConnection {}
-impl GuiComponentMethods for GuiConnection {}
 impl GuiConnection {
     /// This method closes a connection along with all its sessions.
     pub fn close_connection(&self) -> crate::Result<()> {
@@ -437,81 +482,53 @@ impl GuiConnection {
     }
 }
 
-/// The GuiSession provides the context in which a user performs a certain task such as working with
-/// a transaction. It is therefore the access point for applications, which record a user’s actions
-/// regarding a specific task or play back those actions. GuiSession extends GuiContainer. The type
-/// prefix is ses, the name is ses plus the session number in square brackets.
-pub struct GuiSession {
-    pub(crate) inner: IDispatch,
+type_struct! {
+    /// The GuiSession provides the context in which a user performs a certain task such as working with
+    /// a transaction. It is therefore the access point for applications, which record a user’s actions
+    /// regarding a specific task or play back those actions. GuiSession extends GuiContainer. The type
+    /// prefix is ses, the name is ses plus the session number in square brackets.
+    => GuiSession: GuiComponentMethods, GuiContainerMethods,
 }
 
-impl HasDispatch for GuiSession {
-    fn get_idispatch(&self) -> &IDispatch {
-        &self.inner
-    }
-}
-impl GuiComponentMethods for GuiSession {}
-impl GuiContainerMethods for GuiSession {}
-
-/// GuiButton represents all push buttons that are on dynpros, the toolbar or in table controls.
-/// GuiButton extends the GuiVComponent Object. The type prefix is btn, the name property is the
-/// fieldname taken from the SAP data dictionary There is one exception: For tabstrip buttons, it is
-/// the button id set in screen painter that is taken from the SAP data dictionary.
-pub struct GuiButton {
-    pub(crate) inner: IDispatch,
+type_struct! {
+    /// GuiButton represents all push buttons that are on dynpros, the toolbar or in table controls.
+    /// GuiButton extends the GuiVComponent Object. The type prefix is btn, the name property is the
+    /// fieldname taken from the SAP data dictionary There is one exception: For tabstrip buttons, it is
+    /// the button id set in screen painter that is taken from the SAP data dictionary.
+    => GuiButton: GuiBoxMethods, GuiComponentMethods, GuiVComponentMethods,
 }
 
 impl GuiButton {
-    /// This emulates manually pressing a button. Pressing a button will always cause server
-    /// communication to occur, rendering all references to elements below the window level
-    /// invalid.
-    pub fn press(&self) -> crate::Result<()> {
-        let _ = self.inner.call("Press", vec![])?;
-        Ok(())
+    forward_func! {
+        /// This emulates manually pressing a button. Pressing a button will always cause server
+        /// communication to occur, rendering all references to elements below the window level
+        /// invalid.
+        => press, "Press"
     }
-
-    /// This property is True if the button is displayed emphasized (in Fiori Visual Themes:
-    /// The leftmost button in the footer and buttons configured as
-    /// "Fiori Usage D Display<->Change").
-    pub fn emphasized(&self) -> crate::Result<bool> {
-        Ok(self.inner.get("Emphasized")?.to_bool()?)
+    get_property! {
+        /// This property is True if the button is displayed emphasized (in Fiori Visual Themes:
+        /// The leftmost button in the footer and buttons configured as
+        /// "Fiori Usage D Display<->Change").
+        => emphasized, "Emphasized", bool, to_bool
     }
-
-    /// Left label of the GuiButton. The label is assigned in the Screen Painter, using the flag
-    /// 'assign left'.
-    pub fn left_label(&self) -> crate::Result<SAPComponent> {
-        let v = self.inner.get("LeftLabel")?;
-        let comp = v.to_idispatch()?;
-        Ok(SAPComponent::from(GuiComponent {
-            inner: comp.clone(),
-        }))
+    get_property! {
+        /// Left label of the GuiButton. The label is assigned in the Screen Painter, using the flag
+        /// 'assign left'.
+        => left_label, "LeftLabel", SAPComponent, to_sap_component
     }
-
-    /// Right label of the GuiButton. This property is set in Screen Painter using the 'assign
-    /// right' flag.
-    pub fn right_label(&self) -> crate::Result<SAPComponent> {
-        let v = self.inner.get("RightLabel")?;
-        let comp = v.to_idispatch()?;
-        Ok(SAPComponent::from(GuiComponent {
-            inner: comp.clone(),
-        }))
+    get_property! {
+        /// Right label of the GuiButton. This property is set in Screen Painter using the 'assign
+        /// right' flag.
+        => right_label, "RightLabel", SAPComponent, to_sap_component
     }
 }
-impl HasDispatch for GuiButton {
-    fn get_idispatch(&self) -> &IDispatch {
-        &self.inner
-    }
-}
-impl GuiBoxMethods for GuiButton {}
-impl GuiComponentMethods for GuiButton {}
-impl GuiVComponentMethods for GuiButton {}
 
-/// This interface resembles GuiVContainer. The only difference is that it is not intended for visual
-/// objects but rather administrative objects such as connections or sessions. Objects exposing this
-/// interface will therefore support GuiComponent but not GuiVComponent. GuiContainer extends the
-/// GuiComponent Object.
-pub struct GuiComponent {
-    pub(crate) inner: IDispatch,
+type_struct! {
+    /// This interface resembles GuiVContainer. The only difference is that it is not intended for visual
+    /// objects but rather administrative objects such as connections or sessions. Objects exposing this
+    /// interface will therefore support GuiComponent but not GuiVComponent. GuiContainer extends the
+    /// GuiComponent Object.
+    => GuiComponent: GuiComponentMethods, GuiContainerMethods,
 }
 
 impl GuiComponent {
@@ -519,95 +536,158 @@ impl GuiComponent {
         GuiVComponent { inner: self.inner }
     }
 }
-impl HasDispatch for GuiComponent {
-    fn get_idispatch(&self) -> &IDispatch {
-        &self.inner
-    }
-}
-impl GuiComponentMethods for GuiComponent {}
-impl GuiContainerMethods for GuiComponent {}
 
-/// A GuiFrameWindow is a high level visual object in the runtime hierarchy. It can be either the main
-/// window or a modal popup window. See the GuiMainWindow and GuiModalWindow sections for examples.
-/// GuiFrameWindow itself is an abstract interface. GuiFrameWindow extends the GuiVContainer Object.
-/// The type prefix is wnd, the name is wnd plus the window number in square brackets.
-pub struct GuiFrameWindow {
-    pub(crate) inner: IDispatch,
+type_struct! {
+    /// A GuiFrameWindow is a high level visual object in the runtime hierarchy. It can be either the main
+    /// window or a modal popup window. See the GuiMainWindow and GuiModalWindow sections for examples.
+    /// GuiFrameWindow itself is an abstract interface. GuiFrameWindow extends the GuiVContainer Object.
+    /// The type prefix is wnd, the name is wnd plus the window number in square brackets.
+    => GuiFrameWindow: GuiComponentMethods, GuiVComponentMethods, GuiContainerMethods, GuiVContainerMethods, GuiFrameWindowMethods,
 }
 
-impl GuiFrameWindow {
-    // TODO Implement the rest
+type_struct! {
+    /// This window represents the main window of an SAP GUI session. GuiMainWindow extends the
+    /// GuiFrameWindow Object.
+    => GuiMainWindow: GuiComponentMethods, GuiVComponentMethods, GuiContainerMethods, GuiVContainerMethods, GuiFrameWindowMethods,
+}
 
-    /// The function attempts to close the window. Trying to close the last main window of a session
-    /// will not succeed immediately; the dialog ‘Do you really want to log off?’ will be displayed
-    /// first.
-    pub fn close(&self) -> crate::Result<()> {
-        let _ = self.inner.call("Close", vec![])?;
-        Ok(())
+impl GuiMainWindow {
+    get_property! {
+        /// This property it True if the application toolbar, the lower toolbar within SAP GUI,
+        /// is visible. Setting this property to False will hide the application toolbar.
+        => buttonbar_visible, "ButtonbarVisible", bool, to_bool
     }
-
-    /// This will maximize a window. It is not possible to maximize a modal window; it is always the
-    /// main window which will be maximized.
-    pub fn maximize(&self) -> crate::Result<()> {
-        let _ = self.inner.call("Maximize", vec![])?;
-        Ok(())
+    set_property! {
+        /// This property it True if the application toolbar, the lower toolbar within SAP GUI,
+        /// is visible. Setting this property to False will hide the application toolbar.
+        => set_buttonbar_visible, "ButtonbarVisible", bool, from_bool
     }
-
-    /// The virtual key VKey is executed on the window. The VKeys are defined in the menu painter.
-    pub fn send_vkey(&self, vkey: i32) -> crate::Result<()> {
-        let _ = self.inner.call("SendVKey", vec![VARIANT::from_i32(vkey)])?;
-        Ok(())
+    get_property! {
+        /// This property it True if the status bar at the bottom of the SAP GUI window is
+        /// visible. Setting this property to False will hide the status bar. When the status
+        /// bar is hidden, messages will be displayed in a popup instead.
+        => statusbar_visible, "StatusbarVisible", bool, to_bool
+    }
+    set_property! {
+        /// This property it True if the status bar at the bottom of the SAP GUI window is
+        /// visible. Setting this property to False will hide the status bar. When the status
+        /// bar is hidden, messages will be displayed in a popup instead.
+        => set_statusbar_visible, "StatusbarVisible", bool, from_bool
+    }
+    get_property! {
+        /// This property it True if the title bar is visible. Setting this property to False
+        /// will hide the title bar. The title bar is only available in New Visual Design, not
+        /// in Classic Design.
+        => titlebar_visible, "TitlebarVisible", bool, to_bool
+    }
+    set_property! {
+        /// This property it True if the title bar is visible. Setting this property to False
+        /// will hide the title bar. The title bar is only available in New Visual Design, not
+        /// in Classic Design.
+        => set_titlebar_visible, "TitlebarVisible", bool, from_bool
+    }
+    get_property! {
+        /// This property it True if the system toolbar, the upper toolbar within SAP GUI, is
+        /// visible. Setting this property to False will hide the system toolbar.
+        => toolbar_visible, "ToolbarVisible", bool, to_bool
+    }
+    set_property! {
+        /// This property it True if the system toolbar, the upper toolbar within SAP GUI, is
+        /// visible. Setting this property to False will hide the system toolbar.
+        => set_toolbar_visible, "ToolbarVisible", bool, from_bool
     }
 }
-impl HasDispatch for GuiFrameWindow {
-    fn get_idispatch(&self) -> &IDispatch {
-        &self.inner
-    }
-}
-impl GuiComponentMethods for GuiFrameWindow {}
-impl GuiVComponentMethods for GuiFrameWindow {}
-impl GuiContainerMethods for GuiFrameWindow {}
-impl GuiVContainerMethods for GuiFrameWindow {}
 
-/// The GuiOkCodeField is placed on the upper toolbar of the main window. It is a combo box into which
-/// commands can be entered. Setting the text of GuiOkCodeField will not execute the command until
-/// server communication is started, for example by emulating the Enter key (VKey 0). GuiOkCodeField
-/// extends the GuiVComponent Object. The type prefix is okcd, the name is empty.
-pub struct GuiOkCodeField {
-    pub(crate) inner: IDispatch,
+type_struct! {
+    /// The GuiOkCodeField is placed on the upper toolbar of the main window. It is a combo box into which
+    /// commands can be entered. Setting the text of GuiOkCodeField will not execute the command until
+    /// server communication is started, for example by emulating the Enter key (VKey 0). GuiOkCodeField
+    /// extends the GuiVComponent Object. The type prefix is okcd, the name is empty.
+    => GuiOkCodeField: GuiComponentMethods, GuiContainerMethods, GuiVComponentMethods,
 }
 
 impl GuiOkCodeField {
-    /// In SAP GUI designs newer than Classic design the GuiOkCodeField can be collapsed using the arrow
-    /// button to the right of it. In SAP GUI for Windows the GuiOkCodeField may also be collapsed via a
-    /// setting in the Windows registry.
+    get_property! {
+        /// In SAP GUI designs newer than Classic design the GuiOkCodeField can be collapsed using the arrow
+        /// button to the right of it. In SAP GUI for Windows the GuiOkCodeField may also be collapsed via a
+        /// setting in the Windows registry.
+        ///
+        /// This property contains False is the GuiOkCodeField is collapsed.
+        => opened, "Opened", bool, to_bool
+    }
+}
+
+type_struct! {
+    /// The GuiVComponent interface is exposed by all visual objects, such as windows, buttons or text fields.
+    /// Like GuiComponent, it is an abstract interface. Any object supporting the GuiVComponent interface
+    /// also exposes the GuiComponent interface. GuiVComponent extends the GuiComponent Object.
+    => GuiVComponent: GuiComponentMethods, GuiContainerMethods, GuiVComponentMethods,
+}
+
+type_struct! {
+    /// GuiCheckBox extends the GuiVComponent Object. The type prefix is chk, the name is the fieldname taken
+    /// from the SAP data dictionary.
+    => GuiCheckBox: GuiComponentMethods, GuiVComponentMethods,
+}
+
+type_struct! {
+    /// The GuiComboBox looks somewhat similar to GuiCTextField, but has a completely different implementation.
+    /// While pressing the combo box button of a GuiCTextField will open a new dynpro or control in which a
+    /// selection can be made, GuiComboBox retrieves all possible choices on initialization from the server,
+    /// so the selection is done solely on the client. GuiComboBox extends the GuiVComponent Object. The type
+    /// prefix is cmb, the name is the fieldname taken from the SAP data dictionary. GuiComboBox inherits from
+    /// the GuiVComponent Object.
+    => GuiComboBox: GuiComponentMethods, GuiVComponentMethods,
+}
+
+type_struct! {
+    /// If the cursor is set into a text field of type GuiCTextField a combo box button is displayed to the right
+    /// of the text field. Pressing this button is equivalent to pressing the F4 key. The button is not
+    /// represented in the scripting object model as a separate object; it is considered to be part of the text
+    /// field.
     ///
-    /// This property contains False is the GuiOkCodeField is collapsed.
-    pub fn opened(&self) -> crate::Result<bool> {
-        Ok(self.inner.get("Opened")?.to_bool()?)
-    }
-}
-impl HasDispatch for GuiOkCodeField {
-    fn get_idispatch(&self) -> &IDispatch {
-        &self.inner
-    }
-}
-impl GuiComponentMethods for GuiOkCodeField {}
-impl GuiContainerMethods for GuiOkCodeField {}
-impl GuiVComponentMethods for GuiOkCodeField {}
-
-/// The GuiVComponent interface is exposed by all visual objects, such as windows, buttons or text fields.
-/// Like GuiComponent, it is an abstract interface. Any object supporting the GuiVComponent interface
-/// also exposes the GuiComponent interface. GuiVComponent extends the GuiComponent Object.
-pub struct GuiVComponent {
-    inner: IDispatch,
+    /// There are no other differences between GuiTextField and GuiCTextField. GuiCTextField extends the
+    /// GuiTextField. The type prefix is ctxt, the name is the Fieldname taken from the SAP data dictionary.
+    => GuiCTextField: GuiTextFieldMethods, GuiVComponentMethods, GuiComponentMethods,
 }
 
-impl HasDispatch for GuiVComponent {
-    fn get_idispatch(&self) -> &IDispatch {
-        &self.inner
+type_struct! {
+    /// A GuiMenu may have other GuiMenu objects as children. GuiMenu extends the GuiVContainer Object. The type
+    /// prefix is menu, the name is the text of the menu item. If the item does not have a text, which is the case
+    /// for separators, then the name is the last part of the id, menu[n].
+    => GuiMenu: GuiVComponentMethods, GuiVContainerMethods, GuiContainerMethods, GuiComponentMethods,
+}
+
+impl GuiMenu {
+    forward_func! {
+        /// Select the menu.
+        => select, "Select"
     }
 }
-impl GuiComponentMethods for GuiVComponent {}
-impl GuiContainerMethods for GuiVComponent {}
-impl GuiVComponentMethods for GuiVComponent {}
+
+type_struct! {
+    /// Only the main window has a menubar. The children of the menubar are menus. GuiMenubar extends the
+    /// GuiVContainer Object. The type prefix and name are mbar.
+    => GuiMenubar: GuiVComponentMethods, GuiVContainerMethods, GuiContainerMethods, GuiComponentMethods,
+}
+
+type_struct! {
+    /// GuiRadioButton extends the GuiVComponent Object. The type prefix is rad, the name is the fieldname taken from the SAP data dictionary.
+    => GuiRadioButton: GuiVComponentMethods, GuiComponentMethods,
+}
+
+impl GuiRadioButton {
+    forward_func! {
+        /// Selecting a radio button automatically deselects all the other buttons within that group.
+        /// This may cause a server roundtrip, depending on the definition of the button in the screen
+        /// painter.
+        => select, "Select"
+    }
+
+    // TODO properties
+}
+
+type_struct! {
+    /// GuiTextField extends the GuiVComponent Object. The type prefix is txt, the name is the fieldname taken from the SAP data dictionary.
+    => GuiTextField: GuiVComponentMethods, GuiComponentMethods, GuiTextFieldMethods,
+}

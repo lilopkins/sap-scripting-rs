@@ -4,6 +4,38 @@ use crate::idispatch_ext::IDispatchExt;
 use crate::types::*;
 use crate::variant_ext::VariantExt;
 
+/// Forward a function with no args no return type to the IDispatch
+macro_rules! forward_func {
+    ($(#[$attr:meta])* => $snake_name: ident, $name: expr) => {
+        $(#[$attr])*
+        fn $snake_name(&self) -> crate::Result<()> {
+            let _ = self.get_idispatch().call($name, vec![])?;
+            Ok(())
+        }
+    };
+}
+
+/// Forward a function with 1 arg and no return type to the IDispatch
+macro_rules! forward_func_1_arg {
+    ($(#[$attr:meta])* => $snake_name: ident, $name: expr, $arg_name: ident, $arg_ty: ty, $arg_transformer: ident) => {
+        $(#[$attr])*
+        fn $snake_name(&self, $arg_name: $arg_ty) -> crate::Result<()> {
+            let _ = self.get_idispatch().call($name, vec![VARIANT::$arg_transformer($arg_name)])?;
+            Ok(())
+        }
+    };
+}
+
+/// Get a property from the IDispatch
+macro_rules! get_property {
+    ($(#[$attr:meta])* => $snake_name: ident, $name: expr, $kind: ty, $transformer: ident) => {
+        $(#[$attr])*
+        fn $snake_name(&self) -> crate::Result<$kind> {
+            Ok(self.get_idispatch().get($name)?.$transformer()?)
+        }
+    };
+}
+
 /// A component that has an IDispatch value. Every component needs this, and this trait guarantees that.
 pub trait HasDispatch<T = Self> {
     /// Get the IDispatch object for low-level access to this component.
@@ -104,6 +136,74 @@ pub trait GuiContainerMethods<T: GuiComponentMethods = Self>: GuiComponentMethod
                 .clone(),
         })
     }
+}
+
+/// A GuiFrameWindow is a high level visual object in the runtime hierarchy. It can be either the main
+/// window or a modal popup window. See the GuiMainWindow and GuiModalWindow sections for examples.
+/// GuiFrameWindow itself is an abstract interface. GuiFrameWindow extends the GuiVContainer Object.
+/// The type prefix is wnd, the name is wnd plus the window number in square brackets.
+pub trait GuiFrameWindowMethods<T: GuiVContainerMethods + GuiContainerMethods = Self>: GuiVContainerMethods<T> {
+    forward_func! {
+        /// The function attempts to close the window. Trying to close the last main window of a session
+        /// will not succeed immediately; the dialog ‘Do you really want to log off?’ will be displayed
+        /// first.
+        => close, "Close"
+    }
+    forward_func! {
+        /// This will set a window to the iconified state. It is not possible to iconify a specific window
+        /// of a session; both the main window and all existing modals will be iconfied.
+        => iconify, "Iconify"
+    }
+    /// This function returns True if the virtual key VKey is currently available. The VKeys are defined
+    /// in the menu painter.
+    fn is_vkey_allowed(&self, vkey: i32) -> crate::Result<bool> {
+        Ok(self.get_idispatch().call("IsVKeyAllowed", vec![VARIANT::from_i32(vkey)])?.to_bool()?)
+    }
+    forward_func! {
+        /// Execute the Ctrl+Shift+Tab key on the window to jump backward one block.
+        => jump_backward, "JumpBackward"
+    }
+    forward_func! {
+        /// Execute the Ctrl+Tab key on the window to jump forward one block.
+        => jump_forward, "JumpForward"
+    }
+    forward_func! {
+        /// This will maximize a window. It is not possible to maximize a modal window; it is always the
+        /// main window which will be maximized.
+        => maximize, "Maximize"
+    }
+    forward_func! {
+        /// This will restore a window from its iconified state. It is not possible to restore a specific
+        /// window of a session; both the main window and all existing modals will be restored.
+        => restore, "Restore"
+    }
+    forward_func_1_arg! {
+        /// The virtual key VKey is executed on the window. The VKeys are defined in the menu painter.
+        => send_vkey, "SendVKey", vkey, i32, from_i32
+    }
+    // TODO ShowMessageBox
+    forward_func! {
+        /// Execute the Shift+Tab key on the window to jump backward one element.
+        => tab_backward, "TabBackward"
+    }
+    forward_func! {
+        /// Execute the Tab key on the window to jump forward one element.
+        => tab_forward, "TabForward"
+    }
+    get_property! {
+        /// This is the height of the working pane in character metric.
+        => working_pane_height, "WorkingPaneHeight", i64, to_i64
+    }
+    get_property! {
+        /// This is the width of the working pane in character metric. The working pane is the area
+        /// between the toolbars in the upper area of the window and the status bar at the bottom of
+        /// the window.
+        => working_pane_width, "WorkingPaneWidth", i64, to_i64
+    }
+}
+
+pub trait GuiTextFieldMethods<T: GuiVComponentMethods = Self>: GuiVComponentMethods<T> {
+    // TODO
 }
 
 /// The GuiVComponent interface is exposed by all visual objects, such as windows, buttons or text fields.
