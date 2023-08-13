@@ -3,12 +3,13 @@ name = "sap-scripting"
 description = "A Rust interface to the SAP Scripting COM objects."
 repository = "https://github.com/lilopkins/sap-scripting-rs"
 authors = [ "Lily Hopkins <lily@hpkns.uk>" ]
-version = "0.2.0"
+version = "0.3.0"
 edition = "2021"
 license = "MIT"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-log = "0.4.19"
+log = "0.4.20"
+com-shim = "0.3.0"
 windows = { version = "0.48.0", features = [ "Win32_System_Com", "Win32_Foundation", "Win32_System_Ole" ] }

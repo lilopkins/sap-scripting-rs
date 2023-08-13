@@ -1,22 +1,13 @@
-#![warn(missing_docs)]
-
 //! SAP Scripting for Rust
 //!
 //! See the examples for how to use this library.
 
 use windows::Win32::System::Com::*;
 
-mod idispatch_ext;
-/// The methods available are exposed through traits.
-pub mod traits;
 /// The types from this library.
 pub mod types;
-mod utils;
-mod variant_ext;
 
-pub use traits::*;
-pub use types::SAPComponent;
-use types::*;
+pub use types::*;
 
 /// A result of a call.
 pub type Result<T> = ::windows::core::Result<T>;
