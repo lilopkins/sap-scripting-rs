@@ -89,7 +89,7 @@ pub enum SAPComponent {
     /// therefore support GuiComponent but not GuiVComponent. GuiContainer extends the GuiComponent Object.
     GuiContainer(GuiContainer),
     /// A GuiContainerShell is a wrapper for a set of the GuiShell Object. GuiContainerShell extends the GuiVContainer
-    /// Object. The type prefix is shellcont, the name is the last part of the id, shellcont[n].
+    /// Object. The type prefix is shellcont, the name is the last part of the id, shellcont\[n\].
     GuiContainerShell(GuiContainerShell),
     /// If the cursor is set into a text field of type GuiCTextField a combo box button is displayed to the right of
     /// the text field. Pressing this button is equivalent to pressing the F4 key. The button is not represented in
@@ -105,7 +105,7 @@ pub enum SAPComponent {
     GuiCustomControl(GuiCustomControl),
     /// The GuiDialogShell is an external window that is used as a container for other shells, for example a toolbar.
     /// GuiDialogShell extends the GuiVContainer Object. The type prefix is shellcont, the name is the last part of
-    /// the id, shellcont[n].
+    /// the id, shellcont\[n\].
     GuiDialogShell(GuiDialogShell),
     /// The GuiEAIViewer2D control is used to view 2-dimensional graphic images in the SAP system. The user can carry
     /// out redlining over the loaded image. The scripting wrapper for this control records all user actions during
@@ -119,7 +119,7 @@ pub enum SAPComponent {
     /// is wnd plus the window number in square brackets.
     GuiFrameWindow(GuiFrameWindow),
     /// The GuiGosShell is only available in New Visual Design mode. GuiGOSShell extends the GuiVContainer Object.
-    /// The type prefix is shellcont, the name is the last part of the id, shellcont[n].
+    /// The type prefix is shellcont, the name is the last part of the id, shellcont\[n\].
     GuiGOSShell(GuiGOSShell),
     /// For the graphic adapter control only basic members from GuiShell are available. Recording and playback is
     /// not possible.
@@ -141,7 +141,7 @@ pub enum SAPComponent {
     GuiMap(GuiMap),
     /// A GuiMenu may have other GuiMenu objects as children. GuiMenu extends the GuiVContainer Object. The type prefix
     /// is menu, the name is the text of the menu item. If the item does not have a text, which is the case for
-    /// separators, then the name is the last part of the id, menu[n].
+    /// separators, then the name is the last part of the id, menu\[n\].
     GuiMenu(GuiMenu),
     /// Only the main window has a menubar. The children of the menubar are menus. GuiMenubar extends the GuiVContainer
     /// Object. The type prefix and name are mbar.
@@ -181,8 +181,16 @@ pub enum SAPComponent {
     /// GuiScrollContainer extend sthe GuiVContainer Object. The type prefix is ssub, the name is generated from the data
     /// dictionary settings.
     GuiScrollContainer(GuiScrollContainer),
+    /// GuiSession is self-contained in that ids within the context of a session remain valid independently of other connections
+    /// or sessions being open at the same time. Usually an external application will first determine with which session to
+    /// interact. Once that is clear, the application will work more or less exclusively on that session. Traversing the object
+    /// hierarchy from the GuiApplication to the user interface elements, it is the session among whose children the highest
+    /// level visible objects can be found. In contrast to objects like buttons or text fields, the session remains valid until
+    /// the corresponding main window has been closed, whereas buttons, for example, are destroyed during each server
+    /// communication.
+    GuiSession(GuiSession),
     /// GuiShell is an abstract object whose interface is supported by all the controls. GuiShell extends the GuiVContainer
-    /// Object. The type prefix is shell, the name is the last part of the id, shell[n].
+    /// Object. The type prefix is shell, the name is the last part of the id, shell\[n\].
     GuiShell(GuiShell),
     /// This container represents non-scrollable subscreens. It does not have any functionality apart from to the inherited
     /// interfaces. GuiSimpleContainer extends the GuiVContainer Object. The type prefix is sub, the name is is generated
@@ -201,8 +209,8 @@ pub enum SAPComponent {
     /// from the GuiSessionInfo object. GuiStatusbar extends the GuiVComponent Object. The type prefix is sbar.
     GuiStatusbar(GuiStatusbar),
     /// The parent of the GuiStatusPane objects is the status bar (see also GuiStatusbar Object). The GuiStatusPane objects
-    /// reflect the individual areas of the status bar, for example "pane[0]" refers to the section of the status bar where
-    /// the messages are displayed. See also GuiStatusbar Object. The first pane of the GuiStatusBar (pane[0]) can have a
+    /// reflect the individual areas of the status bar, for example "pane\[0\]" refers to the section of the status bar where
+    /// the messages are displayed. See also GuiStatusbar Object. The first pane of the GuiStatusBar (pane\[0\]) can have a
     /// child of type GuiStatusBarLink, if a service request link is displayed.
     GuiStatusPane(GuiStatusPane),
     /// The GuiTab objects are the children of a GuiTabStrip object. GuiTab extends the GuiVContainer Object. The type prefix
@@ -251,12 +259,9 @@ pub enum SAPComponent {
     GuiVHViewSwitch(GuiVHViewSwitch),
 }
 
-impl From<VARIANT> for SAPComponent {
-    fn from(value: VARIANT) -> Self {
-        let idisp = value.to_idispatch().unwrap();
-        let value = GuiComponent {
-            inner: idisp.clone(),
-        };
+impl From<IDispatch> for SAPComponent {
+    fn from(value: IDispatch) -> Self {
+        let value = GuiComponent { inner: value };
         if let Ok(kind) = value._type() {
             log::debug!("Converting component {kind} to SAPComponent.");
             match kind.as_str() {
@@ -345,6 +350,7 @@ impl From<VARIANT> for SAPComponent {
                 "GuiScrollContainer" => {
                     SAPComponent::GuiScrollContainer(GuiScrollContainer { inner: value.inner })
                 }
+                "GuiSession" => SAPComponent::GuiSession(GuiSession { inner: value.inner }),
                 "GuiShell" => SAPComponent::GuiShell(GuiShell { inner: value.inner }),
                 "GuiSimpleContainer" => {
                     SAPComponent::GuiSimpleContainer(GuiSimpleContainer { inner: value.inner })
@@ -386,14 +392,21 @@ impl From<VARIANT> for SAPComponent {
     }
 }
 
+impl From<VARIANT> for SAPComponent {
+    fn from(value: VARIANT) -> Self {
+        let idisp = value.to_idispatch().unwrap();
+        Self::from(idisp.clone())
+    }
+}
+
 com_shim! {
     class GuiApplication: GuiContainer + GuiComponent {
         // TODO ActiveSession: Object,
         mut AllowSystemMessages: bool,
         mut ButtonbarVisible: bool,
-        // TODO Children: GuiComponentCollection,
+        Children: GuiComponentCollection,
         ConnectionErrorText: String,
-        // TODO Connections: GuiComponentCollection,
+        Connections: GuiComponentCollection,
         mut HistoryEnabled: bool,
         MajorVersion: i64,
         MinorVersion: i64,
@@ -403,7 +416,7 @@ com_shim! {
         mut StatusbarVisible: bool,
         mut TitlebarVisible: bool,
         mut ToolbarVisible: bool,
-        // TODO Utils: GuiUtils,
+        Utils: GuiUtils,
 
         fn AddHistoryEntry(String, String) -> bool,
         fn CreateGuiCollection() -> GuiCollection,
@@ -439,8 +452,8 @@ com_shim! {
 com_shim! {
     class GuiButton: GuiVComponent + GuiComponent {
         Emphasized: bool,
-        // TODO LeftLabel: SAPComponent,
-        // TODO RightLabel: SAPComponent,
+        LeftLabel: SAPComponent,
+        RightLabel: SAPComponent,
 
         fn Press(),
     }
@@ -490,8 +503,8 @@ com_shim! {
         IsLeftLabel: bool,
         IsListElement: bool,
         IsRightLabel: bool,
-        // TODO LeftLabel: SAPComponent,
-        // TODO RightLabel: SAPComponent,
+        LeftLabel: SAPComponent,
+        RightLabel: SAPComponent,
         RowText: String,
         mut Selected: bool,
 
@@ -511,12 +524,6 @@ com_shim! {
         fn ElementAt(i64) -> SAPComponent,
     }
 }
-impl From<VARIANT> for GuiCollection {
-    fn from(_value: VARIANT) -> Self {
-        // TODO!
-        todo!()
-    }
-}
 
 com_shim! {
     class GuiColorSelector: GuiVContainer + GuiVComponent + GuiContainer + GuiComponent + GuiShell {
@@ -530,17 +537,17 @@ com_shim! {
         CharLeft: i64,
         CharTop: i64,
         CharWidth: i64,
-        // TODO CurListBoxEntry: SAPComponent,
-        // TODO Entries: GuiCollection,
+        CurListBoxEntry: SAPComponent,
+        Entries: GuiCollection,
         Flushing: bool,
         Highlighted: bool,
         IsLeftLabel: bool,
         IsListBoxActive: bool,
         IsRightLabel: bool,
         mut Key: String,
-        // TODO LeftLabel: SAPComponent,
+        LeftLabel: SAPComponent,
         Required: bool,
-        // TODO RightLabel: SAPComponent,
+        RightLabel: SAPComponent,
         ShowKey: bool,
         Text: String,
         mut Value: String,
@@ -551,8 +558,8 @@ com_shim! {
 
 com_shim! {
     class GuiComboBoxControl: GuiVComponent + GuiVContainer + GuiComponent + GuiContainer + GuiShell {
-        // TODO CurListBoxEntry: SAPComponent,
-        // TODO Entries: GuiCollection,
+        CurListBoxEntry: SAPComponent,
+        Entries: GuiCollection,
         IsListBoxActive: bool,
         LabelText: String,
         mut Selected: String,
@@ -593,11 +600,11 @@ com_shim! {
 
 com_shim! {
     class GuiConnection: GuiContainer + GuiComponent {
-        // TODO Children: GuiComponentCollection,
+        Children: GuiComponentCollection,
         ConnectionString: String,
         Description: String,
         DisabledByServer: bool,
-        // TODO Sessions: GuiComponentCollection,
+        Sessions: GuiComponentCollection,
 
         fn CloseConnection(),
         fn CloseSession(String),
@@ -606,7 +613,7 @@ com_shim! {
 
 com_shim! {
     class GuiContainer: GuiComponent {
-        // TODO Children: GuiComponentCollection,
+        Children: GuiComponentCollection,
 
         fn FindById(String) -> SAPComponent,
     }
@@ -664,10 +671,10 @@ com_shim! {
 com_shim! {
     class GuiFrameWindow: GuiVContainer + GuiVComponent + GuiContainer + GuiComponent {
         mut ElementVisualizationMode: bool,
-        // TODO GuiFocus: SAPComponent,
+        GuiFocus: SAPComponent,
         Handle: i64,
         Iconic: bool,
-        // TODO SystemFocus: SAPComponent,
+        SystemFocus: SAPComponent,
         WorkingPaneHeight: i64,
         WorkingPaneWidth: i64,
 
@@ -761,7 +768,7 @@ com_shim! {
         fn HistoryCurEntry(i64, String) -> String,
         fn HistoryCurIndex(i64, String) -> i64,
         fn HistoryIsActive(i64, String) -> bool,
-        // TODO fn HistoryList(i64, String) -> GuiCollection,
+        fn HistoryList(i64, String) -> GuiCollection,
         fn InsertRows(String),
         fn IsCellHotspot(i64, String) -> bool,
         fn IsCellSymbol(i64, String) -> bool,
@@ -810,7 +817,7 @@ com_shim! {
         HistoryCurEntry: String,
         HistoryCurIndex: i64,
         HistoryIsActive: bool,
-        // TODO HistoryList: GuiCollection,
+        HistoryList: GuiCollection,
         LabelText: String,
         PromptText: String,
 
@@ -953,12 +960,12 @@ com_shim! {
         CharWidth: i64,
         Flushing: bool,
         GroupCount: i64,
-        // TODO GroupMembers: GuiComponentCollection,
+        GroupMembers: GuiComponentCollection,
         GroupPos: i64,
         IsLeftLabel: bool,
         IsRightLabel: bool,
-        // TODO LeftLabel: SAPComponent,
-        // TODO RightLabel: SAPComponent,
+        LeftLabel: SAPComponent,
+        RightLabel: SAPComponent,
         Selected: bool,
 
         fn Select(),
@@ -981,8 +988,8 @@ com_shim! {
 
 com_shim! {
     class GuiScrollContainer: GuiVContainer + GuiVComponent + GuiContainer + GuiComponent {
-        // TODO HorizontalScrollbar: SAPComponent,
-        // TODO VerticalScrollbar: SAPComponent,
+        HorizontalScrollbar: SAPComponent,
+        VerticalScrollbar: SAPComponent,
     }
 }
 
@@ -990,10 +997,10 @@ com_shim! {
     class GuiSession: GuiContainer + GuiComponent {
         mut AccEnhancedTabChain: bool,
         mut AccSymbolReplacement: bool,
-        // TODO ActiveWindow: SAPComponent,
+        ActiveWindow: SAPComponent,
         mut Busy: bool,
         // TODO mut ErrorList: GuiCollection,
-        // TODO Info: GuiSessionInfo,
+        Info: GuiSessionInfo,
         IsActive: bool,
         IsListBoxActive: bool,
         ListBoxCurrEntry: i64,
@@ -1068,7 +1075,7 @@ com_shim! {
         AccDescription: String,
         DragDropSupported: bool,
         Handle: i64,
-        // TODO OcxEvents: GuiCollection,
+        OcxEvents: GuiCollection,
         SubType: String,
 
         fn SelectContextMenuItem(String),
@@ -1143,7 +1150,7 @@ com_shim! {
 
 com_shim! {
     class GuiStatusPane: GuiVComponent + GuiComponent {
-        // TODO Children: GuiComponentCollection,
+        Children: GuiComponentCollection,
     }
 }
 
@@ -1172,15 +1179,15 @@ com_shim! {
         CharTop: i64,
         CharWidth: i64,
         // TODO ColSelectMode: GuiTableSelectionType,
-        // TODO Columns: GuiCollection,
+        Columns: GuiCollection,
         CurrentCol: i64,
         CurrentRow: i64,
-        // TODO HorizontalScrollbar: SAPComponent,
+        HorizontalScrollbar: SAPComponent,
         RowCount: i64,
-        // TODO Rows: GuiCollection,
+        Rows: GuiCollection,
         // TODO RowSelectMode: GuiTableSelectionType,
         TableFieldName: String,
-        // TODO VerticalScrollbar: SAPComponent,
+        VerticalScrollbar: SAPComponent,
         VisibleRowCount: i64,
 
         fn ConfigureLayout(),
@@ -1205,8 +1212,8 @@ com_shim! {
         CharLeft: i64,
         CharTop: i64,
         CharWidth: i64,
-        // TODO LeftTab: SAPComponent,
-        // TODO SelectedTab: SAPComponent,
+        LeftTab: SAPComponent,
+        SelectedTab: SAPComponent,
     }
 }
 
@@ -1253,17 +1260,17 @@ com_shim! {
         HistoryCurEntry: String,
         HistoryCurIndex: i64,
         HistoryIsActive: bool,
-        // TODO HistoryList: GuiCollection,
+        HistoryList: GuiCollection,
         IsHotspot: bool,
         IsLeftLabel: bool,
         IsListElement: bool,
         IsOField: bool,
         IsRightLabel: bool,
-        // TODO LeftLabel: SAPComponent,
+        LeftLabel: SAPComponent,
         MaxLength: i64,
         Numerical: bool,
         Required: bool,
-        // TODO RightLabel: SAPComponent,
+        RightLabel: SAPComponent,
 
         fn GetListProperty(String) -> String,
         fn GetListPropertyNonRec(String) -> String,
@@ -1333,7 +1340,7 @@ com_shim! {
         fn GetItemLeft(String, String) -> i64,
         fn GetItemStyle(String, String) -> i64,
         fn GetItemText(String, String) -> String,
-        // TODO fn GetItemTextColor(String, String) -> u64,
+        fn GetItemTextColor(String, String) -> u64,
         fn GetItemToolTip(String, String) -> String,
         fn GetItemTop(String, String) -> i64,
         fn GetItemType(String, String) -> i64,
@@ -1353,7 +1360,7 @@ com_shim! {
         fn GetNodeStyle(String) -> i64,
         fn GetNodeTextByKey(String) -> String,
         fn GetNodeTextByPath(String) -> String,
-        // TODO fn GetNodeTextColor(String) -> u64,
+        fn GetNodeTextColor(String) -> u64,
         fn GetNodeToolTip(String) -> String,
         fn GetNodeTop(String) -> i64,
         fn GetNodeWidth(String) -> i64,
@@ -1388,9 +1395,9 @@ com_shim! {
 
 com_shim! {
     class GuiUserArea: GuiVContainer + GuiVComponent + GuiComponent + GuiContainer {
-        // TODO HorizontalScrollbar: SAPComponent,
+        HorizontalScrollbar: SAPComponent,
         IsOTFPreview: bool,
-        // TODO VerticalScrollbar: SAPComponent,
+        VerticalScrollbar: SAPComponent,
 
         fn FindByLabel(String, String) -> SAPComponent,
         fn ListNavigate(String),
@@ -1422,7 +1429,7 @@ com_shim! {
 
 com_shim! {
     class GuiVComponent: GuiComponent {
-        // TODO AccLabelCollection: GuiComponentCollection,
+        AccLabelCollection: GuiComponentCollection,
         AccText: String,
         AccTextOnRequest: String,
         AccTooltip: String,
@@ -1433,7 +1440,7 @@ com_shim! {
         IsSymbolFont: bool,
         Left: i64,
         Modified: bool,
-        // TODO ParentFrame: SAPComponent,
+        ParentFrame: SAPComponent,
         ScreenLeft: i64,
         ScreenTop: i64,
         mut Text: String,
@@ -1449,8 +1456,8 @@ com_shim! {
 
 com_shim! {
     class GuiVContainer: GuiVComponent + GuiComponent + GuiContainer {
-        // TODO fn FindAllByName(String, String) -> GuiComponentCollection,
-        // TODO fn FindAllByNameEx(String, i64) -> GuiComponentCollection,
+        fn FindAllByName(String, String) -> GuiComponentCollection,
+        fn FindAllByNameEx(String, i64) -> GuiComponentCollection,
         fn FindByName(String, String) -> SAPComponent,
         fn FindByNameEx(String, String) -> SAPComponent,
     }
