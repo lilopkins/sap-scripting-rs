@@ -262,8 +262,14 @@ pub enum SAPComponent {
 impl From<IDispatch> for SAPComponent {
     fn from(value: IDispatch) -> Self {
         let value = GuiComponent { inner: value };
-        if let Ok(kind) = value._type() {
+        if let Ok(mut kind) = value._type() {
             log::debug!("Converting component {kind} to SAPComponent.");
+            if kind.as_str() == "GuiShell" {
+                if let Ok(sub_kind) = (GuiShell { inner: value.inner.clone() }).sub_type() {
+                    // use subkind if a GuiShell
+                    kind = sub_kind;
+                }
+            }
             match kind.as_str() {
                 "GuiApplication" => {
                     SAPComponent::GuiApplication(GuiApplication { inner: value.inner })
