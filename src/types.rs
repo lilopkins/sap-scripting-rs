@@ -271,20 +271,21 @@ impl From<IDispatch> for SAPComponent {
                 }
             }
             match kind.as_str() {
+                // ! Types that extend from GuiShell are not prefixed with `Gui` as they use SubType.
                 "GuiApplication" => {
                     SAPComponent::GuiApplication(GuiApplication { inner: value.inner })
                 }
-                "GuiBarChart" => SAPComponent::GuiBarChart(GuiBarChart { inner: value.inner }),
+                "BarChart" => SAPComponent::GuiBarChart(GuiBarChart { inner: value.inner }),
                 "GuiBox" => SAPComponent::GuiBox(GuiBox { inner: value.inner }),
                 "GuiButton" => SAPComponent::GuiButton(GuiButton { inner: value.inner }),
-                "GuiCalendar" => SAPComponent::GuiCalendar(GuiCalendar { inner: value.inner }),
-                "GuiChart" => SAPComponent::GuiChart(GuiChart { inner: value.inner }),
+                "Calendar" => SAPComponent::GuiCalendar(GuiCalendar { inner: value.inner }),
+                "Chart" => SAPComponent::GuiChart(GuiChart { inner: value.inner }),
                 "GuiCheckBox" => SAPComponent::GuiCheckBox(GuiCheckBox { inner: value.inner }),
-                "GuiColorSelector" => {
+                "ColorSelector" => {
                     SAPComponent::GuiColorSelector(GuiColorSelector { inner: value.inner })
                 }
                 "GuiComboBox" => SAPComponent::GuiComboBox(GuiComboBox { inner: value.inner }),
-                "GuiComboBoxControl" => {
+                "ComboBoxControl" => {
                     SAPComponent::GuiComboBoxControl(GuiComboBoxControl { inner: value.inner })
                 }
                 "GuiComboBoxEntry" => {
@@ -295,7 +296,7 @@ impl From<IDispatch> for SAPComponent {
                     SAPComponent::GuiConnection(GuiConnection { inner: value.inner })
                 }
                 "GuiContainer" => SAPComponent::GuiContainer(GuiContainer { inner: value.inner }),
-                "GuiContainerShell" => {
+                "ContainerShell" => {
                     SAPComponent::GuiContainerShell(GuiContainerShell { inner: value.inner })
                 }
                 "GuiCTextField" => {
@@ -307,38 +308,38 @@ impl From<IDispatch> for SAPComponent {
                 "GuiDialogShell" => {
                     SAPComponent::GuiDialogShell(GuiDialogShell { inner: value.inner })
                 }
-                "GuiEAIViewer2D" => {
+                "EAIViewer2D" => {
                     SAPComponent::GuiEAIViewer2D(GuiEAIViewer2D { inner: value.inner })
                 }
-                "GuiEAIViewer3D" => {
+                "EAIViewer3D" => {
                     SAPComponent::GuiEAIViewer3D(GuiEAIViewer3D { inner: value.inner })
                 }
                 "GuiFrameWindow" => {
                     SAPComponent::GuiFrameWindow(GuiFrameWindow { inner: value.inner })
                 }
                 "GuiGOSShell" => SAPComponent::GuiGOSShell(GuiGOSShell { inner: value.inner }),
-                "GuiGraphAdapt" => {
+                "GraphAdapt" => {
                     SAPComponent::GuiGraphAdapt(GuiGraphAdapt { inner: value.inner })
                 }
-                "GuiGridView" => SAPComponent::GuiGridView(GuiGridView { inner: value.inner }),
-                "GuiHTMLViewer" => {
+                "GridView" => SAPComponent::GuiGridView(GuiGridView { inner: value.inner }),
+                "HTMLViewer" => {
                     SAPComponent::GuiHTMLViewer(GuiHTMLViewer { inner: value.inner })
                 }
-                "GuiInputFieldControl" => {
+                "InputFieldControl" => {
                     SAPComponent::GuiInputFieldControl(GuiInputFieldControl { inner: value.inner })
                 }
                 "GuiLabel" => SAPComponent::GuiLabel(GuiLabel { inner: value.inner }),
                 "GuiMainWindow" => {
                     SAPComponent::GuiMainWindow(GuiMainWindow { inner: value.inner })
                 }
-                "GuiMap" => SAPComponent::GuiMap(GuiMap { inner: value.inner }),
+                "Map" => SAPComponent::GuiMap(GuiMap { inner: value.inner }),
                 "GuiMenu" => SAPComponent::GuiMenu(GuiMenu { inner: value.inner }),
                 "GuiMenubar" => SAPComponent::GuiMenubar(GuiMenubar { inner: value.inner }),
                 "GuiModalWindow" => {
                     SAPComponent::GuiModalWindow(GuiModalWindow { inner: value.inner })
                 }
-                "GuiNetChart" => SAPComponent::GuiNetChart(GuiNetChart { inner: value.inner }),
-                "GuiOfficeIntegration" => {
+                "NetChart" => SAPComponent::GuiNetChart(GuiNetChart { inner: value.inner }),
+                "OfficeIntegration" => {
                     SAPComponent::GuiOfficeIntegration(GuiOfficeIntegration { inner: value.inner })
                 }
                 "GuiOkCodeField" => {
@@ -347,11 +348,11 @@ impl From<IDispatch> for SAPComponent {
                 "GuiPasswordField" => {
                     SAPComponent::GuiPasswordField(GuiPasswordField { inner: value.inner })
                 }
-                "GuiPicture" => SAPComponent::GuiPicture(GuiPicture { inner: value.inner }),
+                "Picture" => SAPComponent::GuiPicture(GuiPicture { inner: value.inner }),
                 "GuiRadioButton" => {
                     SAPComponent::GuiRadioButton(GuiRadioButton { inner: value.inner })
                 }
-                "GuiSapChart" => SAPComponent::GuiSapChart(GuiSapChart { inner: value.inner }),
+                "SapChart" => SAPComponent::GuiSapChart(GuiSapChart { inner: value.inner }),
                 "GuiScrollbar" => SAPComponent::GuiScrollbar(GuiScrollbar { inner: value.inner }),
                 "GuiScrollContainer" => {
                     SAPComponent::GuiScrollContainer(GuiScrollContainer { inner: value.inner })
@@ -361,11 +362,11 @@ impl From<IDispatch> for SAPComponent {
                 "GuiSimpleContainer" => {
                     SAPComponent::GuiSimpleContainer(GuiSimpleContainer { inner: value.inner })
                 }
-                "GuiSplit" => SAPComponent::GuiSplit(GuiSplit { inner: value.inner }),
-                "GuiSplitterContainer" => {
+                "Split" => SAPComponent::GuiSplit(GuiSplit { inner: value.inner }),
+                "SplitterContainer" => {
                     SAPComponent::GuiSplitterContainer(GuiSplitterContainer { inner: value.inner })
                 }
-                "GuiStage" => SAPComponent::GuiStage(GuiStage { inner: value.inner }),
+                "Stage" => SAPComponent::GuiStage(GuiStage { inner: value.inner }),
                 "GuiStatusbar" => SAPComponent::GuiStatusbar(GuiStatusbar { inner: value.inner }),
                 "GuiStatusPane" => {
                     SAPComponent::GuiStatusPane(GuiStatusPane { inner: value.inner })
@@ -375,11 +376,11 @@ impl From<IDispatch> for SAPComponent {
                     SAPComponent::GuiTableControl(GuiTableControl { inner: value.inner })
                 }
                 "GuiTabStrip" => SAPComponent::GuiTabStrip(GuiTabStrip { inner: value.inner }),
-                "GuiTextedit" => SAPComponent::GuiTextedit(GuiTextedit { inner: value.inner }),
+                "Textedit" => SAPComponent::GuiTextedit(GuiTextedit { inner: value.inner }),
                 "GuiTextField" => SAPComponent::GuiTextField(GuiTextField { inner: value.inner }),
                 "GuiTitlebar" => SAPComponent::GuiTitlebar(GuiTitlebar { inner: value.inner }),
                 "GuiToolbar" => SAPComponent::GuiToolbar(GuiToolbar { inner: value.inner }),
-                "GuiTree" => SAPComponent::GuiTree(GuiTree { inner: value.inner }),
+                "Tree" => SAPComponent::GuiTree(GuiTree { inner: value.inner }),
                 "GuiUserArea" => SAPComponent::GuiUserArea(GuiUserArea { inner: value.inner }),
                 "GuiVComponent" => {
                     SAPComponent::GuiVComponent(GuiVComponent { inner: value.inner })
