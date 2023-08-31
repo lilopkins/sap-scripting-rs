@@ -415,11 +415,11 @@ com_shim! {
         ConnectionErrorText: String,
         Connections: GuiComponentCollection,
         mut HistoryEnabled: bool,
-        MajorVersion: i64,
-        MinorVersion: i64,
+        MajorVersion: i32,
+        MinorVersion: i32,
         NewVisualDesign: bool,
-        Patchlevel: i64,
-        Revision: i64,
+        Patchlevel: i32,
+        Revision: i32,
         mut StatusbarVisible: bool,
         mut TitlebarVisible: bool,
         mut ToolbarVisible: bool,
@@ -428,7 +428,7 @@ com_shim! {
         fn AddHistoryEntry(String, String) -> bool,
         fn CreateGuiCollection() -> GuiCollection,
         fn DropHistory() -> bool,
-        fn Ignore(i32),
+        fn Ignore(i16),
         fn OpenConnection(String) -> SAPComponent,
         fn OpenConnectionByConnectionString(String) -> SAPComponent,
     }
@@ -436,23 +436,23 @@ com_shim! {
 
 com_shim! {
     class GuiBarChart: GuiVContainer + GuiVComponent + GuiContainer + GuiComponent + GuiShell {
-        ChartCount: i64,
+        ChartCount: i32,
 
-        fn BarCount(i64) -> i64,
-        fn GetBarContent(i64, i64, i64) -> String,
-        fn GetGridLineContent(i64, i64, i64) -> String,
-        fn GridCount(i64) -> i64,
-        fn LinkCount(i64) -> i64,
+        fn BarCount(i32) -> i32,
+        fn GetBarContent(i32, i32, i32) -> String,
+        fn GetGridLineContent(i32, i32, i32) -> String,
+        fn GridCount(i32) -> i32,
+        fn LinkCount(i32) -> i32,
         fn SendData(String),
     }
 }
 
 com_shim! {
     class GuiBox: GuiVComponent + GuiComponent {
-        CharHeight: i64,
-        CharLeft: i64,
-        CharTop: i64,
-        CharWidth: i64,
+        CharHeight: i32,
+        CharLeft: i32,
+        CharTop: i32,
+        CharWidth: i32,
     }
 }
 
@@ -471,40 +471,40 @@ com_shim! {
         endSelection: String,
         mut FirstVisibleDate: String,
         mut FocusDate: String,
-        FocusedElement: i64,
+        FocusedElement: i32,
         horizontal: bool,
         mut LastVisibleDate: String,
         mut SelectionInterval: String,
         startSelection: String,
         Today: String,
 
-        fn ContextMenu(i64, i64, i64, String, String),
-        fn CreateDate(i64, i64, i64),
-        fn GetColor(String) -> i64,
-        fn GetColorInfo(i64) -> String,
+        fn ContextMenu(i32, i32, i32, String, String),
+        fn CreateDate(i32, i32, i32),
+        fn GetColor(String) -> i32,
+        fn GetColorInfo(i32) -> String,
         fn GetDateTooltip(String) -> String,
-        fn GetDay(String) -> i64,
-        fn GetMonth(String) -> i64,
+        fn GetDay(String) -> i32,
+        fn GetMonth(String) -> i32,
         fn GetWeekday(String) -> String,
-        fn GetWeekNumber(String) -> i64,
-        fn GetYear(String) -> i64,
+        fn GetWeekNumber(String) -> i32,
+        fn GetYear(String) -> i32,
         fn IsWeekend(String) -> bool,
-        fn SelectMonth(i64, i64),
+        fn SelectMonth(i32, i32),
         fn SelectRange(String, String),
-        fn SelectWeek(i64, i64),
+        fn SelectWeek(i32, i32),
     }
 }
 
 com_shim! {
     class GuiChart: GuiVContainer + GuiVComponent + GuiContainer + GuiComponent + GuiShell {
-        fn ValueChange(i64, i64, String, String, bool, String, String, i64),
+        fn ValueChange(i32, i32, String, String, bool, String, String, i32),
     }
 }
 
 com_shim! {
     class GuiCheckBox: GuiVComponent + GuiComponent {
-        ColorIndex: i64,
-        ColorIntensified: i64,
+        ColorIndex: i32,
+        ColorIntensified: i32,
         ColorInverse: bool,
         Flushing: bool,
         IsLeftLabel: bool,
@@ -522,28 +522,28 @@ com_shim! {
 
 com_shim! {
     class GuiCollection {
-        Count: i64,
-        Length: i64,
+        Count: i32,
+        Length: i32,
         Type: String,
-        TypeAsNumber: i64,
+        TypeAsNumber: i32,
 
         // TODO fn Add(Variant),
-        fn ElementAt(i64) -> SAPComponent,
+        fn ElementAt(i32) -> SAPComponent,
     }
 }
 
 com_shim! {
     class GuiColorSelector: GuiVContainer + GuiVComponent + GuiContainer + GuiComponent + GuiShell {
-        fn ChangeSelection(i32),
+        fn ChangeSelection(i16),
     }
 }
 
 com_shim! {
     class GuiComboBox: GuiVComponent + GuiComponent {
-        CharHeight: i64,
-        CharLeft: i64,
-        CharTop: i64,
-        CharWidth: i64,
+        CharHeight: i32,
+        CharLeft: i32,
+        CharTop: i32,
+        CharWidth: i32,
         CurListBoxEntry: SAPComponent,
         Entries: GuiCollection,
         Flushing: bool,
@@ -579,7 +579,7 @@ com_shim! {
 com_shim! {
     class GuiComboBoxEntry {
         Key: String,
-        Pos: i64,
+        Pos: i32,
         Value: String,
     }
 }
@@ -590,18 +590,18 @@ com_shim! {
         Id: String,
         Name: String,
         Type: String,
-        TypeAsNumber: i64,
+        TypeAsNumber: i32,
     }
 }
 
 com_shim! {
     class GuiComponentCollection {
-        Count: i64,
-        Length: i64,
+        Count: i32,
+        Length: i32,
         Type: String,
-        TypeAsNumber: i64,
+        TypeAsNumber: i32,
 
-        fn ElementAt(i64) -> SAPComponent,
+        fn ElementAt(i32) -> SAPComponent,
     }
 }
 
@@ -638,10 +638,10 @@ com_shim! {
 
 com_shim! {
     class GuiCustomControl: GuiVContainer + GuiVComponent + GuiContainer + GuiComponent {
-        CharHeight: i64,
-        CharLeft: i64,
-        CharTop: i64,
-        CharWidth: i64,
+        CharHeight: i32,
+        CharLeft: i32,
+        CharTop: i32,
+        CharWidth: i32,
     }
 }
 
@@ -657,14 +657,14 @@ com_shim! {
     class GuiDockShell: GuiVContainer + GuiVComponent + GuiContainer + GuiComponent {
         AccDescription: String,
         DockerIsVertical: bool,
-        mut DockerPixelSize: i64,
+        mut DockerPixelSize: i32,
     }
 }
 
 com_shim! {
     class GuiEAIViewer2D: GuiVContainer + GuiVComponent + GuiContainer + GuiComponent + GuiShell {
-        mut AnnoutationEnabled: i64,
-        mut AnnotationMode: i32,
+        mut AnnoutationEnabled: i32,
+        mut AnnotationMode: i16,
         mut RedliningStream: String,
 
         fn annotationTextRequest(String),
@@ -679,23 +679,23 @@ com_shim! {
     class GuiFrameWindow: GuiVContainer + GuiVComponent + GuiContainer + GuiComponent {
         mut ElementVisualizationMode: bool,
         GuiFocus: SAPComponent,
-        Handle: i64,
+        Handle: i32,
         Iconic: bool,
         SystemFocus: SAPComponent,
-        WorkingPaneHeight: i64,
-        WorkingPaneWidth: i64,
+        WorkingPaneHeight: i32,
+        WorkingPaneWidth: i32,
 
         fn Close(),
-        fn CompBitmap(String, String) -> i64,
-        fn HardCopy(String, i32) -> String,
+        fn CompBitmap(String, String) -> i32,
+        fn HardCopy(String, i16) -> String,
         fn Iconify(),
-        fn IsVKeyAllowed(i32) -> bool,
+        fn IsVKeyAllowed(i16) -> bool,
         fn JumpBackward(),
         fn JumpForward(),
         fn Maximize(),
         fn Restore(),
-        fn SendVKey(i32),
-        fn ShowMessageBox(String, String, i64, i64) -> i64,
+        fn SendVKey(i16),
+        fn ShowMessageBox(String, String, i32, i32) -> i32,
         fn TabBackward(),
         fn TabForward(),
     }
@@ -711,83 +711,83 @@ com_shim! {
 
 com_shim! {
     class GuiGridView: GuiVComponent + GuiVContainer + GuiComponent + GuiContainer + GuiShell {
-        ColumnCount: i64,
+        ColumnCount: i32,
         // TODO mut ColumnOrder: Object,
         mut CurrentCellColumn: String,
-        mut CurrentCellRow: i64,
+        mut CurrentCellRow: i32,
         mut FirstVisibleColumn: String,
-        mut FirstVisibleRow: i64,
-        FrozenColumnCount: i64,
-        RowCount: i64,
+        mut FirstVisibleRow: i32,
+        FrozenColumnCount: i32,
+        RowCount: i32,
         // TODO mut SelectedCells: Object,
         // TODO mut SelectedColumns: Object,
         mut SelectedRows: String,
         SelectionMode: String,
         Title: String,
-        ToolbarButtonCount: i64,
-        VisibleRowCount: i64,
+        ToolbarButtonCount: i32,
+        VisibleRowCount: i32,
 
         fn ClearSelection(),
-        fn Click(i64, String),
+        fn Click(i32, String),
         fn ClickCurrentCell(),
         fn ContextMenu(),
         fn CurrentCellMoved(),
         fn DeleteRows(String),
         fn DeselectColumn(String),
-        fn DoubleClick(i64, String),
+        fn DoubleClick(i32, String),
         fn DoubleClickCurrentCell(),
         fn DuplicateRows(String),
-        fn GetCellChangeable(i64, String) -> bool,
-        fn GetCellCheckBoxChecked(i64, String) -> bool,
-        fn GetCellColor(i64, String) -> i64,
-        fn GetCellHeight(i64, String) -> i64,
-        fn GetCellHotspotType(i64, String) -> String,
-        fn GetCellIcon(i64, String) -> String,
-        fn GetCellLeft(i64, String) -> i64,
-        fn GetCellListBoxCount(i64, String) -> i64,
-        fn GetCellListBoxCurIndex(i64, String) -> String,
-        fn GetCellMaxLength(i64, String) -> i64,
-        fn GetCellState(i64, String) -> String,
-        fn GetCellTooltip(i64, String) -> String,
-        fn GetCellTop(i64, String) -> i64,
-        fn GetCellType(i64, String) -> String,
-        fn GetCellValue(i64, String) -> String,
-        fn GetCellWidth(i64, String) -> i64,
-        fn GetColorInfo(i64) -> String,
+        fn GetCellChangeable(i32, String) -> bool,
+        fn GetCellCheckBoxChecked(i32, String) -> bool,
+        fn GetCellColor(i32, String) -> i32,
+        fn GetCellHeight(i32, String) -> i32,
+        fn GetCellHotspotType(i32, String) -> String,
+        fn GetCellIcon(i32, String) -> String,
+        fn GetCellLeft(i32, String) -> i32,
+        fn GetCellListBoxCount(i32, String) -> i32,
+        fn GetCellListBoxCurIndex(i32, String) -> String,
+        fn GetCellMaxLength(i32, String) -> i32,
+        fn GetCellState(i32, String) -> String,
+        fn GetCellTooltip(i32, String) -> String,
+        fn GetCellTop(i32, String) -> i32,
+        fn GetCellType(i32, String) -> String,
+        fn GetCellValue(i32, String) -> String,
+        fn GetCellWidth(i32, String) -> i32,
+        fn GetColorInfo(i32) -> String,
         fn GetColumnDataType(String) -> String,
         fn GetColumnOperationType(String) -> String,
-        fn GetColumnPosition(String) -> i64,
+        fn GetColumnPosition(String) -> i32,
         fn GetColumnSortType(String) -> String,
         // TODO fn GetColumnTitles(String) -> Object,
         fn GetColumnTooltip(String) -> String,
         fn GetColumnTotalType(String) -> String,
         fn GetDisplayedColumnTitle(String) -> String,
-        fn GetRowTotalLevel(i64) -> i64,
+        fn GetRowTotalLevel(i32) -> i32,
         fn GetSymbolInfo(String) -> String,
-        fn GetToolbarButtonChecked(i64) -> bool,
-        fn GetToolbarButtonEnabled(i64) -> bool,
-        fn GetToolbarButtonIcon(i64) -> String,
-        fn GetToolbarButtonId(i64) -> String,
-        fn GetToolbarButtonText(i64) -> String,
-        fn GetToolbarButtonTooltip(i64) -> String,
-        fn GetToolbarButtonType(i64) -> String,
-        fn GetToolbarFocusButton() -> i64,
-        fn HasCellF4Help(i64, String) -> bool,
-        fn HistoryCurEntry(i64, String) -> String,
-        fn HistoryCurIndex(i64, String) -> i64,
-        fn HistoryIsActive(i64, String) -> bool,
-        fn HistoryList(i64, String) -> GuiCollection,
+        fn GetToolbarButtonChecked(i32) -> bool,
+        fn GetToolbarButtonEnabled(i32) -> bool,
+        fn GetToolbarButtonIcon(i32) -> String,
+        fn GetToolbarButtonId(i32) -> String,
+        fn GetToolbarButtonText(i32) -> String,
+        fn GetToolbarButtonTooltip(i32) -> String,
+        fn GetToolbarButtonType(i32) -> String,
+        fn GetToolbarFocusButton() -> i32,
+        fn HasCellF4Help(i32, String) -> bool,
+        fn HistoryCurEntry(i32, String) -> String,
+        fn HistoryCurIndex(i32, String) -> i32,
+        fn HistoryIsActive(i32, String) -> bool,
+        fn HistoryList(i32, String) -> GuiCollection,
         fn InsertRows(String),
-        fn IsCellHotspot(i64, String) -> bool,
-        fn IsCellSymbol(i64, String) -> bool,
-        fn IsCellTotalExpander(i64, String) -> bool,
+        fn IsCellHotspot(i32, String) -> bool,
+        fn IsCellSymbol(i32, String) -> bool,
+        fn IsCellTotalExpander(i32, String) -> bool,
         fn IsColumnFiltered(String) -> bool,
         fn IsColumnKey(String) -> bool,
-        fn IsTotalRowExpanded(i64) -> bool,
-        fn ModifyCell(i64, String, String),
-        fn ModifyCheckBox(i64, String, bool),
-        fn MoveRows(i64, i64, i64),
-        fn PressButton(i64, String),
+        fn IsTotalRowExpanded(i32) -> bool,
+        fn ModifyCell(i32, String, String),
+        fn ModifyCheckBox(i32, String, bool),
+        fn MoveRows(i32, i32, i32),
+        fn PressButton(i32, String),
         fn PressButtonCurrentCell(),
         fn PressColumnHeader(String),
         fn PressEnter(),
@@ -795,14 +795,14 @@ com_shim! {
         fn PressF4(),
         fn PressToolbarButton(String),
         fn PressToolbarContextButton(String),
-        fn PressTotalRow(i64, String),
+        fn PressTotalRow(i32, String),
         fn PressTotalRowCurrentCell(),
         fn SelectAll(),
         fn SelectColumn(String),
         fn SelectionChanged(),
         fn SelectToolbarMenuItem(String),
-        fn SetColumnWidth(String, i64),
-        fn SetCurrentCell(i64, String),
+        fn SetColumnWidth(String, i32),
+        fn SetCurrentCell(i32, String),
         fn TriggerModified(),
     }
 }
@@ -810,10 +810,10 @@ com_shim! {
 com_shim! {
     class GuiHTMLViewer: GuiVComponent + GuiVContainer + GuiComponent + GuiContainer + GuiShell {
         // TODO BrowserHandle: Object,
-        DocumentComplete: i64,
+        DocumentComplete: i32,
 
         fn ContextMenu(),
-        fn GetBrowerControlType() -> i64,
+        fn GetBrowerControlType() -> i32,
         fn SapEvent(String, String, String),
     }
 }
@@ -823,7 +823,7 @@ com_shim! {
         ButtonTooltip: String,
         FindButtonActivated: bool,
         HistoryCurEntry: String,
-        HistoryCurIndex: i64,
+        HistoryCurIndex: i32,
         HistoryIsActive: bool,
         HistoryList: GuiCollection,
         LabelText: String,
@@ -835,12 +835,12 @@ com_shim! {
 
 com_shim! {
     class GuiLabel: GuiVComponent + GuiComponent {
-        mut CaretPosition: i64,
-        CharHeight: i64,
-        CharLeft: i64,
-        CharTop: i64,
-        CharWidth: i64,
-        ColorIndex: i64,
+        mut CaretPosition: i32,
+        CharHeight: i32,
+        CharLeft: i32,
+        CharTop: i32,
+        CharWidth: i32,
+        ColorIndex: i32,
         ColorIntensified: bool,
         ColorInverse: bool,
         DisplayedText: String,
@@ -849,7 +849,7 @@ com_shim! {
         IsLeftLabel: bool,
         IsListElement: bool,
         IsRightLabel: bool,
-        MaxLength: i64,
+        MaxLength: i32,
         Numerical: bool,
         RowText: String,
 
@@ -865,8 +865,8 @@ com_shim! {
         mut TitlebarVisible: bool,
         mut ToolbarVisible: bool,
 
-        fn ResizeWorkingPane(i64, i64, bool),
-        fn ResizeWorkingPaneEx(i64, i64, bool),
+        fn ResizeWorkingPane(i32, i32, bool),
+        fn ResizeWorkingPaneEx(i32, i32, bool),
     }
 }
 
@@ -886,15 +886,15 @@ com_shim! {
 
 com_shim! {
     class GuiMessageWindow: GuiVComponent + GuiComponent {
-        FocusedButton: i64,
+        FocusedButton: i32,
         HelpButtonHelpText: String,
         HelpButtonText: String,
         MessageText: String,
-        MessageType: i64,
+        MessageType: i32,
         OKButtonHelpText: String,
         OKButtonText: String,
-        ScreenLeft: i64,
-        ScreenTop: i64,
+        ScreenLeft: i32,
+        ScreenTop: i32,
         Visible: bool,
     }
 }
@@ -908,11 +908,11 @@ com_shim! {
 
 com_shim! {
     class GuiNetChart: GuiVComponent + GuiVContainer + GuiComponent + GuiContainer + GuiShell {
-        LinkCount: i64,
-        NodeCount: i64,
+        LinkCount: i32,
+        NodeCount: i32,
 
-        fn GetLinkContent(i64, i64) -> String,
-        fn GetNodeContent(i64, i64) -> String,
+        fn GetLinkContent(i32, i32) -> String,
+        fn GetNodeContent(i32, i32) -> String,
         fn SendData(String),
     }
 }
@@ -920,14 +920,14 @@ com_shim! {
 com_shim! {
     class GuiOfficeIntegration: GuiVContainer + GuiVComponent + GuiContainer + GuiComponent + GuiShell {
         // TODO Document: Object,
-        HostedApplication: i64,
+        HostedApplication: i32,
 
         fn AppendRow(String, String),
-        fn CloseDocument(i64, bool, bool),
-        // TODO fn CustomEvent(i64, String, i64, ...),
+        fn CloseDocument(i32, bool, bool),
+        // TODO fn CustomEvent(i32, String, i32, ...),
         fn RemoveContent(String),
-        fn SaveDocument(i64, bool),
-        fn SetDocument(i64, String),
+        fn SaveDocument(i32, bool),
+        fn SetDocument(i32, String),
     }
 }
 
@@ -951,25 +951,25 @@ com_shim! {
         Url: String,
 
         fn Click(),
-        fn ClickControlArea(i64, i64),
-        fn ClickPictureArea(i64, i64),
-        fn ContextMenu(i64, i64),
+        fn ClickControlArea(i32, i32),
+        fn ClickPictureArea(i32, i32),
+        fn ContextMenu(i32, i32),
         fn DoubleClick(),
-        fn DoubleClickControlArea(i64, i64),
-        fn DoubleClickPictureArea(i64, i64),
+        fn DoubleClickControlArea(i32, i32),
+        fn DoubleClickPictureArea(i32, i32),
     }
 }
 
 com_shim! {
     class GuiRadioButton: GuiVComponent + GuiComponent {
-        CharHeight: i64,
-        CharLeft: i64,
-        CharTop: i64,
-        CharWidth: i64,
+        CharHeight: i32,
+        CharLeft: i32,
+        CharTop: i32,
+        CharWidth: i32,
         Flushing: bool,
-        GroupCount: i64,
+        GroupCount: i32,
         GroupMembers: GuiComponentCollection,
-        GroupPos: i64,
+        GroupPos: i32,
         IsLeftLabel: bool,
         IsRightLabel: bool,
         LeftLabel: SAPComponent,
@@ -986,11 +986,11 @@ com_shim! {
 
 com_shim! {
     class GuiScrollbar {
-        Maximum: i64,
-        Minimum: i64,
-        PageSize: i64,
-        mut Position: i64,
-        Range: i64,
+        Maximum: i32,
+        Minimum: i32,
+        PageSize: i32,
+        mut Position: i32,
+        Range: i32,
     }
 }
 
@@ -1011,36 +1011,36 @@ com_shim! {
         Info: GuiSessionInfo,
         IsActive: bool,
         IsListBoxActive: bool,
-        ListBoxCurrEntry: i64,
-        ListBoxCurrEntryHeight: i64,
-        ListBoxCurrEntryLeft: i64,
-        ListBoxCurrEntryTop: i64,
-        ListBoxCurrEntryWidth: i64,
-        ListBoxHeight: i64,
-        ListBoxLeft: i64,
-        ListBoxTop: i64,
-        ListBoxWidth: i64,
+        ListBoxCurrEntry: i32,
+        ListBoxCurrEntryHeight: i32,
+        ListBoxCurrEntryLeft: i32,
+        ListBoxCurrEntryTop: i32,
+        ListBoxCurrEntryWidth: i32,
+        ListBoxHeight: i32,
+        ListBoxLeft: i32,
+        ListBoxTop: i32,
+        ListBoxWidth: i32,
         mut PassportPreSystemId: String,
         mut PassportSystemId: String,
         mut PassportTransactionId: String,
-        ProgressPercent: i64,
+        ProgressPercent: i32,
         ProgressText: String,
         mut Record: bool,
         mut RecordFile: String,
         mut SaveAsUnicode: bool,
         mut ShowDropdownKeys: bool,
         mut SuppressBackendPopups: bool,
-        mut TestToolMode: i64,
+        mut TestToolMode: i32,
 
         fn AsStdNumberFormat(String) -> String,
         fn ClearErrorList(),
         fn CreateSession(),
         fn EnableJawsEvents(),
         fn EndTransaction(),
-        fn FindByPosition(i64, i64) -> SAPComponent,
+        fn FindByPosition(i32, i32) -> SAPComponent,
         fn GetIconResourceName(String) -> String,
         fn GetObjectTree(String) -> String,
-        fn GetVKeyDescription(i64) -> String,
+        fn GetVKeyDescription(i32) -> String,
         fn LockSessionUI(),
         fn SendCommand(String),
         fn SendCommandAsync(String),
@@ -1053,24 +1053,24 @@ com_shim! {
     class GuiSessionInfo {
         ApplicationServer: String,
         Client: String,
-        Codepage: i64,
-        Flushes: i64,
+        Codepage: i32,
+        Flushes: i32,
         Group: String,
-        GuiCodepage: i64,
+        GuiCodepage: i32,
         I18NMode: bool,
-        InterpretationTime: i64,
+        InterpretationTime: i32,
         IsLowSpeedConnection: bool,
         Language: String,
         MessageServer: String,
         Program: String,
-        ResponseTime: i64,
-        RoundTrips: i64,
-        ScreenNumber: i64,
+        ResponseTime: i32,
+        RoundTrips: i32,
+        ScreenNumber: i32,
         ScriptingModeReadOnly: bool,
         ScriptingModeRecordingDisabled: bool,
-        SessionNumber: i64,
+        SessionNumber: i32,
         SystemName: String,
-        SystemNumber: i64,
+        SystemNumber: i32,
         SystemSessionId: String,
         Transaction: String,
         UI_GUIDELINE: String,
@@ -1082,7 +1082,7 @@ com_shim! {
     class GuiShell: GuiVContainer + GuiVComponent + GuiContainer + GuiComponent {
         AccDescription: String,
         DragDropSupported: bool,
-        Handle: i64,
+        Handle: i32,
         OcxEvents: GuiCollection,
         SubType: String,
 
@@ -1097,11 +1097,11 @@ com_shim! {
         IsListElement: bool,
         IsStepLoop: bool,
         IsStepLoopInTableStructure: bool,
-        LoopColCount: i64,
-        LoopCurrentCol: i64,
-        LoopCurrentColCount: i64,
-        LoopCurrentRow: i64,
-        LoopRowCount: i64,
+        LoopColCount: i32,
+        LoopCurrentCol: i32,
+        LoopCurrentColCount: i32,
+        LoopCurrentRow: i32,
+        LoopRowCount: i32,
 
         fn GetListProperty(String) -> String,
         fn GetListPropertyNonRec(String) -> String,
@@ -1110,19 +1110,19 @@ com_shim! {
 
 com_shim! {
     class GuiSplit: GuiVContainer + GuiVComponent + GuiContainer + GuiComponent + GuiShell {
-        IsVertical: i64,
+        IsVertical: i32,
 
-        fn GetColSize(i64) -> i64,
-        fn GetRowSize(i64) -> i64,
-        fn SetColSize(i64, i64),
-        fn SetRowSize(i64, i64),
+        fn GetColSize(i32) -> i32,
+        fn GetRowSize(i32) -> i32,
+        fn SetColSize(i32, i32),
+        fn SetRowSize(i32, i32),
     }
 }
 
 com_shim! {
     class GuiSplitterContainer: GuiVContainer + GuiVComponent + GuiComponent + GuiContainer + GuiShell {
         IsVertical: bool,
-        mut SashPosition: i64,
+        mut SashPosition: i32,
     }
 }
 
@@ -1136,9 +1136,9 @@ com_shim! {
 
 com_shim! {
     class GuiStatusbar: GuiVComponent + GuiVContainer + GuiComponent + GuiContainer {
-        Handle: i64,
+        Handle: i32,
         MessageAsPopup: bool,
-        MessageHasLongText: i64,
+        MessageHasLongText: i32,
         MessageId: String,
         MessageNumber: String,
         MessageParameter: String,
@@ -1182,26 +1182,26 @@ com_shim! {
 
 com_shim! {
     class GuiTableControl: GuiVContainer + GuiVComponent + GuiContainer + GuiComponent {
-        CharHeight: i64,
-        CharLeft: i64,
-        CharTop: i64,
-        CharWidth: i64,
+        CharHeight: i32,
+        CharLeft: i32,
+        CharTop: i32,
+        CharWidth: i32,
         // TODO ColSelectMode: GuiTableSelectionType,
         Columns: GuiCollection,
-        CurrentCol: i64,
-        CurrentRow: i64,
+        CurrentCol: i32,
+        CurrentRow: i32,
         HorizontalScrollbar: SAPComponent,
-        RowCount: i64,
+        RowCount: i32,
         Rows: GuiCollection,
         // TODO RowSelectMode: GuiTableSelectionType,
         TableFieldName: String,
         VerticalScrollbar: SAPComponent,
-        VisibleRowCount: i64,
+        VisibleRowCount: i32,
 
         fn ConfigureLayout(),
         fn DeselectAllColumns(),
-        fn GetAbsoluteRow(i64) -> SAPComponent,
-        fn GetCell(i64, i64) -> SAPComponent,
+        fn GetAbsoluteRow(i32) -> SAPComponent,
+        fn GetCell(i32, i32) -> SAPComponent,
         fn ReorderTable(String),
         fn SelectAllColumns(),
     }
@@ -1216,10 +1216,10 @@ com_shim! {
 
 com_shim! {
     class GuiTabStrip: GuiVContainer + GuiVComponent + GuiContainer + GuiComponent {
-        CharHeight: i64,
-        CharLeft: i64,
-        CharTop: i64,
-        CharWidth: i64,
+        CharHeight: i32,
+        CharLeft: i32,
+        CharTop: i32,
+        CharWidth: i32,
         LeftTab: SAPComponent,
         SelectedTab: SAPComponent,
     }
@@ -1227,46 +1227,46 @@ com_shim! {
 
 com_shim! {
     class GuiTextedit: GuiShell + GuiVComponent + GuiVContainer + GuiContainer + GuiComponent {
-        CurrentColumn: i64,
-        CurrentLine: i64,
-        mut FirstVisibleLine: i64,
-        LastVisibleLine: i64,
-        LineCount: i64,
-        NumberOfUnprotectedTextParts: i64,
+        CurrentColumn: i32,
+        CurrentLine: i32,
+        mut FirstVisibleLine: i32,
+        LastVisibleLine: i32,
+        LineCount: i32,
+        NumberOfUnprotectedTextParts: i32,
         SelectedText: String,
-        SelectionEndColumn: i64,
-        SelectionEndLine: i64,
-        SelectionIndexEnd: i64,
-        SelectionIndexStart: i64,
-        SelectionStartColumn: i64,
-        SelectionStartLine: i64,
+        SelectionEndColumn: i32,
+        SelectionEndLine: i32,
+        SelectionIndexEnd: i32,
+        SelectionIndexStart: i32,
+        SelectionStartColumn: i32,
+        SelectionStartLine: i32,
 
         fn ContextMenu(),
         fn DoubleClick(),
-        fn GetLineText(i64) -> String,
-        fn GetUnprotectedTextPart(i64) -> String,
-        fn IsBreakpointLine(i64) -> bool,
-        fn IsCommentLine(i64) -> bool,
-        fn IsHighlightedLine(i64) -> bool,
-        fn IsProtectedLine(i64) -> bool,
-        fn IsSelectedLine(i64) -> bool,
+        fn GetLineText(i32) -> String,
+        fn GetUnprotectedTextPart(i32) -> String,
+        fn IsBreakpointLine(i32) -> bool,
+        fn IsCommentLine(i32) -> bool,
+        fn IsHighlightedLine(i32) -> bool,
+        fn IsProtectedLine(i32) -> bool,
+        fn IsSelectedLine(i32) -> bool,
         fn ModifiedStatusChanged(bool),
         fn MultipleFilesDropped(),
         fn PressF1(),
         fn PressF4(),
-        fn SetSelectionIndexes(i64, i64),
-        fn SetUnprotectedTextPart(i64, String) -> bool,
+        fn SetSelectionIndexes(i32, i32),
+        fn SetUnprotectedTextPart(i32, String) -> bool,
         fn SingleFileDropped(String),
     }
 }
 
 com_shim! {
     class GuiTextField: GuiVComponent + GuiComponent {
-        mut CaretPosition: i64,
+        mut CaretPosition: i32,
         DisplayedText: String,
         Highlighted: bool,
         HistoryCurEntry: String,
-        HistoryCurIndex: i64,
+        HistoryCurIndex: i32,
         HistoryIsActive: bool,
         HistoryList: GuiCollection,
         IsHotspot: bool,
@@ -1275,7 +1275,7 @@ com_shim! {
         IsOField: bool,
         IsRightLabel: bool,
         LeftLabel: SAPComponent,
-        MaxLength: i64,
+        MaxLength: i32,
         Numerical: bool,
         Required: bool,
         RightLabel: SAPComponent,
@@ -1295,17 +1295,17 @@ com_shim! {
 
 com_shim! {
     class GuiToolbarControl: GuiShell + GuiVComponent + GuiVContainer + GuiComponent + GuiContainer {
-        ButtonCount: i64,
-        FocusedButton: i64,
+        ButtonCount: i32,
+        FocusedButton: i32,
 
-        fn GetButtonChecked(i64) -> bool,
-        fn GetButtonEnabled(i64) -> bool,
-        fn GetButtonIcon(i64) -> String,
-        fn GetButtonId(i64) -> String,
-        fn GetButtonText(i64) -> String,
-        fn GetButtonTooltip(i64) -> String,
-        fn GetButtonType(i64) -> String,
-        fn GetMenuItemIdFromPosition(i64) -> String,
+        fn GetButtonChecked(i32) -> bool,
+        fn GetButtonEnabled(i32) -> bool,
+        fn GetButtonIcon(i32) -> String,
+        fn GetButtonId(i32) -> String,
+        fn GetButtonText(i32) -> String,
+        fn GetButtonTooltip(i32) -> String,
+        fn GetButtonType(i32) -> String,
+        fn GetMenuItemIdFromPosition(i32) -> String,
         fn PressButton(String),
         fn PressContextButton(String),
         fn SelectMenuItem(String),
@@ -1316,7 +1316,7 @@ com_shim! {
 com_shim! {
     class GuiTree: GuiShell + GuiVContainer + GuiVComponent + GuiComponent + GuiContainer {
         // TODO ColumnOrder: Object,
-        HierarchyHeaderWidth: i64,
+        HierarchyHeaderWidth: i32,
         SelectedNode: String,
         TopNode: String,
 
@@ -1334,51 +1334,51 @@ com_shim! {
         fn GetCheckBoxState(String, String) -> bool,
         // TODO fn GetColumnCol(String) -> Object,
         // TODO fn GetColumnHeaders() -> Object,
-        fn GetColumnIndexFromName(String) -> i64,
+        fn GetColumnIndexFromName(String) -> i32,
         // TODO fn GetColumnNames() -> Object,
         fn GetColumnTitleFromName(String) -> String,
         // TODO fn GetColumnTitles() -> Object,
         fn GetFocusedNodeKey() -> String,
-        fn GetHierarchyLevel(String) -> i64,
+        fn GetHierarchyLevel(String) -> i32,
         fn GetHierarchyTitle() -> String,
         fn GetIsDisabled(String, String) -> bool,
         fn GetIsEditable(String, String) -> bool,
         fn GetIsHighLighted(String, String) -> bool,
-        fn GetItemHeight(String, String) -> i64,
-        fn GetItemLeft(String, String) -> i64,
-        fn GetItemStyle(String, String) -> i64,
+        fn GetItemHeight(String, String) -> i32,
+        fn GetItemLeft(String, String) -> i32,
+        fn GetItemStyle(String, String) -> i32,
         fn GetItemText(String, String) -> String,
         fn GetItemTextColor(String, String) -> u64,
         fn GetItemToolTip(String, String) -> String,
-        fn GetItemTop(String, String) -> i64,
-        fn GetItemType(String, String) -> i64,
-        fn GetItemWidth(String, String) -> i64,
-        fn GetListTreeNodeItemCount(String) -> i64,
+        fn GetItemTop(String, String) -> i32,
+        fn GetItemType(String, String) -> i32,
+        fn GetItemWidth(String, String) -> i32,
+        fn GetListTreeNodeItemCount(String) -> i32,
         fn GetNextNodeKey(String) -> String,
         fn GetNodeAbapImage(String) -> String,
-        fn GetNodeChildrenCount(String) -> i64,
-        fn GetNodeChildrenCountByPath(String) -> i64,
-        fn GetNodeHeight(String) -> i64,
-        fn GetNodeIndex(String) -> i64,
+        fn GetNodeChildrenCount(String) -> i32,
+        fn GetNodeChildrenCountByPath(String) -> i32,
+        fn GetNodeHeight(String) -> i32,
+        fn GetNodeIndex(String) -> i32,
         // TODO fn GetNodeItemHeaders(String) -> Object,
         fn GetNodeKeyByPath(String) -> String,
-        fn GetNodeLeft(String) -> i64,
+        fn GetNodeLeft(String) -> i32,
         fn GetNodePathByKey(String) -> String,
         // TODO fn GetNodesCol() -> Object,
-        fn GetNodeStyle(String) -> i64,
+        fn GetNodeStyle(String) -> i32,
         fn GetNodeTextByKey(String) -> String,
         fn GetNodeTextByPath(String) -> String,
         fn GetNodeTextColor(String) -> u64,
         fn GetNodeToolTip(String) -> String,
-        fn GetNodeTop(String) -> i64,
-        fn GetNodeWidth(String) -> i64,
+        fn GetNodeTop(String) -> i32,
+        fn GetNodeWidth(String) -> i32,
         fn GetParent(String) -> String,
         fn GetPreviousNodeKey(String) -> String,
         // TODO fn GetSelectedNodes() -> Object,
-        fn GetSelectionMode() -> i32,
-        fn GetStyleDescription(i64) -> String,
+        fn GetSelectionMode() -> i16,
+        fn GetStyleDescription(i32) -> String,
         // TODO fn GetSubNodesCol(String) -> Object,
-        fn GetTreeType() -> i64,
+        fn GetTreeType() -> i32,
         fn HeaderContextMenu(String),
         fn IsFolder(String) -> bool,
         fn IsFolderExpandable(String) -> bool,
@@ -1393,8 +1393,8 @@ com_shim! {
         fn SelectedItemNode() -> String,
         fn SelectItem(String, String),
         fn SelectNode(String),
-        fn SetCheckBoxState(String, String, i64),
-        fn SetColumnWidth(String, i64),
+        fn SetCheckBoxState(String, String, i32),
+        fn SetColumnWidth(String, i32),
         fn UnselectAll(),
         fn UnselectColumn(String),
         fn UnselectNode(String),
@@ -1414,24 +1414,24 @@ com_shim! {
 
 com_shim! {
     class GuiUtils {
-        MESSAGE_OPTION_OK: i64,
-        MESSAGE_OPTION_OKCANCEL: i64,
-        MESSAGE_OPTION_YESNO: i64,
-        MESSAGE_RESULT_CANCEL: i64,
-        MESSAGE_RESULT_NO: i64,
-        MESSAGE_RESULT_OK: i64,
-        MESSAGE_RESULT_YES: i64,
-        MESSAGE_TYPE_ERROR: i64,
-        MESSAGE_TYPE_INFORMATION: i64,
-        MESSAGE_TYPE_PLAIN: i64,
-        MESSAGE_TYPE_QUESTION: i64,
-        MESSAGE_TYPE_WARNING: i64,
+        MESSAGE_OPTION_OK: i32,
+        MESSAGE_OPTION_OKCANCEL: i32,
+        MESSAGE_OPTION_YESNO: i32,
+        MESSAGE_RESULT_CANCEL: i32,
+        MESSAGE_RESULT_NO: i32,
+        MESSAGE_RESULT_OK: i32,
+        MESSAGE_RESULT_YES: i32,
+        MESSAGE_TYPE_ERROR: i32,
+        MESSAGE_TYPE_INFORMATION: i32,
+        MESSAGE_TYPE_PLAIN: i32,
+        MESSAGE_TYPE_QUESTION: i32,
+        MESSAGE_TYPE_WARNING: i32,
 
-        fn CloseFile(i64),
-        fn OpenFile(String) -> i64,
-        fn ShowMessageBox(String, String, i64, i64) -> i64,
-        fn Write(i64, String),
-        fn WriteLine(i64, String),
+        fn CloseFile(i32),
+        fn OpenFile(String) -> i32,
+        fn ShowMessageBox(String, String, i32, i32) -> i32,
+        fn Write(i32, String),
+        fn WriteLine(i32, String),
     }
 }
 
@@ -1443,18 +1443,18 @@ com_shim! {
         AccTooltip: String,
         Changeable: bool,
         DefaultTooltip: String,
-        Height: i64,
+        Height: i32,
         IconName: String,
         IsSymbolFont: bool,
-        Left: i64,
+        Left: i32,
         Modified: bool,
         ParentFrame: SAPComponent,
-        ScreenLeft: i64,
-        ScreenTop: i64,
+        ScreenLeft: i32,
+        ScreenTop: i32,
         mut Text: String,
         Tooltip: String,
-        Top: i64,
-        Width: i64,
+        Top: i32,
+        Width: i32,
 
         fn DumpState(String) -> GuiCollection,
         fn SetFocus(),
@@ -1465,7 +1465,7 @@ com_shim! {
 com_shim! {
     class GuiVContainer: GuiVComponent + GuiComponent + GuiContainer {
         fn FindAllByName(String, String) -> GuiComponentCollection,
-        fn FindAllByNameEx(String, i64) -> GuiComponentCollection,
+        fn FindAllByNameEx(String, i32) -> GuiComponentCollection,
         fn FindByName(String, String) -> SAPComponent,
         fn FindByNameEx(String, String) -> SAPComponent,
     }
