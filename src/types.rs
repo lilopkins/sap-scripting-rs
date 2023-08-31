@@ -265,8 +265,10 @@ impl From<IDispatch> for SAPComponent {
         if let Ok(mut kind) = value._type() {
             log::debug!("Converting component {kind} to SAPComponent.");
             if kind.as_str() == "GuiShell" {
+                log::debug!("Kind is shell, checking subkind.");
                 if let Ok(sub_kind) = (GuiShell { inner: value.inner.clone() }).sub_type() {
                     // use subkind if a GuiShell
+                    log::debug!("Subkind is {sub_kind}");
                     kind = sub_kind;
                 }
             }
