@@ -4,19 +4,20 @@ version = 3
 
 [[package]]
 name = "com-shim"
-version = "0.3.4"
+version = "0.3.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "86aa85aa6279248ef8a8eb641576c052d8877365974cd99e6bf8728c06e75ff4"
+checksum = "9d37d2ef4e9a41f2f53f881b394f0d7d9ecda49a99b75e9881f88318b0a67cab"
 dependencies = [
  "com-shim-macro",
+ "log",
  "windows",
 ]
 
 [[package]]
 name = "com-shim-macro"
-version = "0.3.4"
+version = "0.3.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4c28237b3ad44461f9109728aa1fa34ab69601a76145df6f9e841bd97157b6e8"
+checksum = "4a147e680fe095ccb3031b3ddf1dbf47ddf77a03d81fed0215d2a541f673c834"
 dependencies = [
  "heck",
 ]
@@ -44,9 +45,19 @@ dependencies = [
 
 [[package]]
 name = "windows"
-version = "0.48.0"
+version = "0.51.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e686886bc078bc1b0b600cac0147aadb815089b6e4da64016cbd754b6342700f"
+checksum = "ca229916c5ee38c2f2bc1e9d8f04df975b4bd93f9955dc69fabb5d91270045c9"
+dependencies = [
+ "windows-core",
+ "windows-targets",
+]
+
+[[package]]
+name = "windows-core"
+version = "0.51.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f1f8cf84f35d2db49a46868f947758c7a1138116f7fac3bc844f43ade1292e64"
 dependencies = [
  "windows-targets",
 ]

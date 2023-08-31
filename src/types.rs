@@ -1,5 +1,5 @@
 use com_shim::{com_shim, IDispatchExt, VariantExt};
-use windows::{core::*, Win32::System::Com::*};
+use windows::{core::*, Win32::System::Com::*, Win32::System::Variant::*};
 
 /// A wrapper over the SAP scripting engine, equivalent to CSapROTWrapper.
 pub struct SAPWrapper {
@@ -291,7 +291,7 @@ impl From<IDispatch> for SAPComponent {
                 "GuiComboBoxEntry" => {
                     SAPComponent::GuiComboBoxEntry(GuiComboBoxEntry { inner: value.inner })
                 }
-                "GuiComponent" => SAPComponent::GuiComponent(value.into()),
+                "GuiComponent" => SAPComponent::GuiComponent(value),
                 "GuiConnection" => {
                     SAPComponent::GuiConnection(GuiConnection { inner: value.inner })
                 }
