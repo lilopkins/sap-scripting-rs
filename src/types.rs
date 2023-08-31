@@ -687,6 +687,7 @@ com_shim! {
 
         fn Close(),
         fn CompBitmap(String, String) -> i64,
+        fn HardCopy(String, i32) -> String,
         fn Iconify(),
         fn IsVKeyAllowed(i32) -> bool,
         fn JumpBackward(),
