@@ -1,5 +1,5 @@
 use com_shim::{com_shim, IDispatchExt, VariantExt};
-use windows::{core::*, Win32::System::Com::*};
+use windows::{core::*, Win32::System::Com::*, Win32::System::Variant::*};
 
 /// A wrapper over the SAP scripting engine, equivalent to CSapROTWrapper.
 pub struct SAPWrapper {
@@ -265,8 +265,10 @@ impl From<IDispatch> for SAPComponent {
         if let Ok(mut kind) = value._type() {
             log::debug!("Converting component {kind} to SAPComponent.");
             if kind.as_str() == "GuiShell" {
+                log::debug!("Kind is shell, checking subkind.");
                 if let Ok(sub_kind) = (GuiShell { inner: value.inner.clone() }).sub_type() {
                     // use subkind if a GuiShell
+                    log::debug!("Subkind is {sub_kind}");
                     kind = sub_kind;
                 }
             }
@@ -291,7 +293,7 @@ impl From<IDispatch> for SAPComponent {
                 "GuiComboBoxEntry" => {
                     SAPComponent::GuiComboBoxEntry(GuiComboBoxEntry { inner: value.inner })
                 }
-                "GuiComponent" => SAPComponent::GuiComponent(value.into()),
+                "GuiComponent" => SAPComponent::GuiComponent(value),
                 "GuiConnection" => {
                     SAPComponent::GuiConnection(GuiConnection { inner: value.inner })
                 }
