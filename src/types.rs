@@ -1202,7 +1202,7 @@ com_shim! {
 
         fn ConfigureLayout(),
         fn DeselectAllColumns(),
-        fn GetAbsoluteRow(i32) -> SAPComponent,
+        fn GetAbsoluteRow(i32) -> GuiTableRow,
         fn GetCell(i32, i32) -> SAPComponent,
         fn ReorderTable(String),
         fn SelectAllColumns(),
