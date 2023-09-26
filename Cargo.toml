@@ -3,7 +3,7 @@ name = "sap-scripting"
 description = "A Rust interface to the SAP Scripting COM objects."
 repository = "https://github.com/lilopkins/sap-scripting-rs"
 authors = [ "Lily Hopkins <lily@hpkns.uk>" ]
-version = "0.3.6"
+version = "0.3.7"
 edition = "2021"
 license = "MIT"
 
