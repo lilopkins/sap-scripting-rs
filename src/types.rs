@@ -1,5 +1,5 @@
-use com_shim::{com_shim, IDispatchExt, VariantTypeExt};
-use windows::{core::*, Win32::System::Com::*, Win32::System::Variant::*};
+use com_shim::{HasIDispatch, IDispatchExt, VariantTypeExt, com_shim};
+use windows::{Win32::System::Com::*, Win32::System::Variant::*, core::*};
 
 /// A wrapper over the SAP scripting engine, equivalent to CSapROTWrapper.
 pub struct SAPWrapper {
@@ -22,9 +22,10 @@ impl SAPWrapper {
     /// Get the Scripting Engine object from this wrapper.
     pub fn scripting_engine(&self) -> crate::Result<GuiApplication> {
         log::debug!("Getting UI ROT entry...");
-        let result = self
-            .inner
-            .call("GetROTEntry", vec![VARIANT::variant_from("SAPGUI".to_string())])?;
+        let result = self.inner.call(
+            "GetROTEntry",
+            vec![VARIANT::variant_from("SAPGUI".to_string())],
+        )?;
 
         let sap_gui: &IDispatch = result.variant_into()?;
 
@@ -32,379 +33,67 @@ impl SAPWrapper {
         let scripting_engine = sap_gui.call("GetScriptingEngine", vec![])?;
 
         Ok(GuiApplication {
-            inner: <com_shim::VARIANT as VariantTypeExt<'_, &IDispatch>>::variant_into(&scripting_engine)?.clone(),
+            inner: <com_shim::VARIANT as VariantTypeExt<'_, &IDispatch>>::variant_into(
+                &scripting_engine,
+            )?
+            .clone(),
         })
     }
 }
 
-/// SAPComponent wraps around all of the GuiComponent types, allowing a more Rust-y way of exporing components.
-pub enum SAPComponent {
-    /// The GuiApplication represents the process in which all SAP GUI activity takes place. If the scripting
-    /// component is accessed by attaching to an SAP Logon process, then GuiApplication will represent SAP
-    /// Logon. GuiApplication is a creatable class. However, there must be only one component of this type
-    /// in any process. GuiApplication extends the GuiContainer Object.
-    GuiApplication(GuiApplication),
-    /// The GuiBarChart is a powerful tool to display and modify time scale diagrams.
-    GuiBarChart(GuiBarChart),
-    /// A GuiBox is a simple frame with a name (also called a "Group Box"). The items inside the frame are not
-    /// children of the box. The type prefix is "box".
-    GuiBox(GuiBox),
-    /// GuiButton represents all push buttons that are on dynpros, the toolbar or in table controls. GuiButton
-    /// extends the GuiVComponent Object. The type prefix is btn, the name property is the fieldname taken
-    /// from the SAP data dictionary There is one exception: For tabstrip buttons, it is the button id set in
-    /// screen painter that is taken from the SAP data dictionary.
-    GuiButton(GuiButton),
-    /// The calendar control can be used to select single dates or periods of time. GuiCalendar extends the
-    /// GuiShell Object.
-    GuiCalendar(GuiCalendar),
-    /// The GuiChart object is of a very technical nature. It should only be used for recording and playback, as
-    /// most of the parameters cannot be determined in any other way.
-    GuiChart(GuiChart),
-    /// GuiCheckBox extends the GuiVComponent Object. The type prefix is chk, the name is the fieldname taken
-    /// from the SAP data dictionary.
-    GuiCheckBox(GuiCheckBox),
-    /// GuiColorSelector displays a set of colors for selection. It extends the GuiShell Object.
-    GuiColorSelector(GuiColorSelector),
-    /// The GuiComboBox looks somewhat similar to GuiCTextField, but has a completely different implementation.
-    /// While pressing the combo box button of a GuiCTextField will open a new dynpro or control in which a
-    /// selection can be made, GuiComboBox retrieves all possible choices on initialization from the server, so
-    /// the selection is done solely on the client. GuiComboBox extends the GuiVComponent Object. The type prefix
-    /// is cmb, the name is the fieldname taken from the SAP data dictionary. GuiComboBox inherits from the
-    /// GuiVComponent Object.
-    GuiComboBox(GuiComboBox),
-    ///
-    GuiComboBoxControl(GuiComboBoxControl),
-    /// Members of the Entries collection of a GuiComboBox are of type GuiComBoxEntry.
-    GuiComboBoxEntry(GuiComboBoxEntry),
-    /// GuiComponent is the base class for most classes in the Scripting API. It was designed to allow generic
-    /// programming, meaning you can work with objects without knowing their exact type.
-    GuiComponent(GuiComponent),
-    /// A GuiConnection represents the connection between SAP GUI and an application server. Connections can be opened
-    /// from SAP Logon or from GuiApplication’s openConnection and openConnectionByConnectionString methods.
-    /// GuiConnection extends the GuiContainer Object. The type prefix for GuiConnection is con, the name is con
-    /// plus the connection number in square brackets.
-    GuiConnection(GuiConnection),
-    /// This interface resembles GuiVContainer. The only difference is that it is not intended for visual objects
-    /// but rather administrative objects such as connections or sessions. Objects exposing this interface will
-    /// therefore support GuiComponent but not GuiVComponent. GuiContainer extends the GuiComponent Object.
-    GuiContainer(GuiContainer),
-    /// A GuiContainerShell is a wrapper for a set of the GuiShell Object. GuiContainerShell extends the GuiVContainer
-    /// Object. The type prefix is shellcont, the name is the last part of the id, shellcont\[n\].
-    GuiContainerShell(GuiContainerShell),
-    /// If the cursor is set into a text field of type GuiCTextField a combo box button is displayed to the right of
-    /// the text field. Pressing this button is equivalent to pressing the F4 key. The button is not represented in
-    /// the scripting object model as a separate object; it is considered to be part of the text field.
-    ///
-    /// There are no other differences between GuiTextField and GuiCTextField. GuiCTextField extends the GuiTextField.
-    /// The type prefix is ctxt, the name is the Fieldname taken from the SAP data dictionary.
-    GuiCTextField(GuiCTextField),
-    /// The GuiCustomControl is a wrapper object that is used to place ActiveX controls onto dynpro screens. While
-    /// GuiCustomControl is a dynpro element itself, its children are of GuiContainerShell type, which is a container
-    /// for controls. GuiCustomControl extends the GuiVContainer Object. The type prefix is cntl, the name is the
-    /// fieldname taken from the SAP data dictionary.
-    GuiCustomControl(GuiCustomControl),
-    /// The GuiDialogShell is an external window that is used as a container for other shells, for example a toolbar.
-    /// GuiDialogShell extends the GuiVContainer Object. The type prefix is shellcont, the name is the last part of
-    /// the id, shellcont\[n\].
-    GuiDialogShell(GuiDialogShell),
-    /// The GuiEAIViewer2D control is used to view 2-dimensional graphic images in the SAP system. The user can carry
-    /// out redlining over the loaded image. The scripting wrapper for this control records all user actions during
-    /// the redlining process and reproduces the same actions when the recorded script is replayed.
-    GuiEAIViewer2D(GuiEAIViewer2D),
-    /// The GuiEAIViewer3D control is used to view 3-dimensional graphic images in the SAP system.
-    GuiEAIViewer3D(GuiEAIViewer3D),
-    /// A GuiFrameWindow is a high level visual object in the runtime hierarchy. It can be either the main window or
-    /// a modal popup window. See the GuiMainWindow and GuiModalWindow sections for examples. GuiFrameWindow itself
-    /// is an abstract interface. GuiFrameWindow extends the GuiVContainer Object. The type prefix is wnd, the name
-    /// is wnd plus the window number in square brackets.
-    GuiFrameWindow(GuiFrameWindow),
-    /// The GuiGosShell is only available in New Visual Design mode. GuiGOSShell extends the GuiVContainer Object.
-    /// The type prefix is shellcont, the name is the last part of the id, shellcont\[n\].
-    GuiGOSShell(GuiGOSShell),
-    /// For the graphic adapter control only basic members from GuiShell are available. Recording and playback is
-    /// not possible.
-    GuiGraphAdapt(GuiGraphAdapt),
-    /// The grid view is similar to the dynpro table control, but significantly more powerful. GuiGridView extends
-    /// the GuiShell Object.
-    GuiGridView(GuiGridView),
-    /// The GuiHTMLViewer is used to display an HTML document inside SAP GUI. GuiHTMLViewer extends the GuiShell
-    /// Object.
-    GuiHTMLViewer(GuiHTMLViewer),
-    ///
-    GuiInputFieldControl(GuiInputFieldControl),
-    /// GuiLabel extends the GuiVComponent Object. The type prefix is lbl, the name is the fieldname taken from the
-    /// SAP data dictionary.
-    GuiLabel(GuiLabel),
-    /// This window represents the main window of an SAP GUI session.
-    GuiMainWindow(GuiMainWindow),
-    /// For the map control only basic members from GuiShell are available. Recording and playback is not possible.
-    GuiMap(GuiMap),
-    /// A GuiMenu may have other GuiMenu objects as children. GuiMenu extends the GuiVContainer Object. The type prefix
-    /// is menu, the name is the text of the menu item. If the item does not have a text, which is the case for
-    /// separators, then the name is the last part of the id, menu\[n\].
-    GuiMenu(GuiMenu),
-    /// Only the main window has a menubar. The children of the menubar are menus. GuiMenubar extends the GuiVContainer
-    /// Object. The type prefix and name are mbar.
-    GuiMenubar(GuiMenubar),
-    /// A GuiModalWindow is a dialog pop-up.
-    GuiModalWindow(GuiModalWindow),
-    /// The GuiNetChart is a powerful tool to display and modify entity relationship diagrams. It is of a very technical
-    /// nature and should only be used for recording and playback, as most of the parameters cannot be determined in
-    /// any other way.
-    GuiNetChart(GuiNetChart),
-    ///
-    GuiOfficeIntegration(GuiOfficeIntegration),
-    /// The GuiOkCodeField is placed on the upper toolbar of the main window. It is a combo box into which commands can
-    /// be entered. Setting the text of GuiOkCodeField will not execute the command until server communication is
-    /// started, for example by emulating the Enter key (VKey 0). GuiOkCodeField extends the GuiVComponent Object. The
-    /// type prefix is okcd, the name is empty.
-    GuiOkCodeField(GuiOkCodeField),
-    /// There are some differences between GuiTextField and GuiPasswordField:
-    ///
-    /// - The Text and DisplayedText properties cannot be read for a password field. The returned text is always empty.
-    /// During recording the password is also not saved in the recorded script.
-    /// - The properties HistoryCurEntry, HistoryCurIndex, HistoryIsActive and HistoryList are not supported, because
-    /// password fields do not offer an input history
-    /// - The property IsListElement is not supported, because password fields cannot be placed on ABAP lists
-    GuiPasswordField(GuiPasswordField),
-    /// The picture control displays a picture on an SAP GUI screen. GuiPicture extends the GuiShell Object.
-    GuiPicture(GuiPicture),
-    /// GuiRadioButton extends the GuiVComponent Object. The type prefix is rad, the name is the fieldname taken from the
-    /// SAP data dictionary.
-    GuiRadioButton(GuiRadioButton),
-    /// For the SAP chart control only basic members from GuiShell are available. Recording and playback is not possible.
-    GuiSapChart(GuiSapChart),
-    /// The GuiScrollbar class is a utility class used for example in GuiScrollContainer or GuiTableControl.
-    GuiScrollbar(GuiScrollbar),
-    /// This container represents scrollable subscreens. A subscreen may be scrollable without actually having a scrollbar,
-    /// because the existence of a scrollbar depends on the amount of data displayed and the size of the GuiUserArea.
-    /// GuiScrollContainer extend sthe GuiVContainer Object. The type prefix is ssub, the name is generated from the data
-    /// dictionary settings.
-    GuiScrollContainer(GuiScrollContainer),
-    /// GuiSession is self-contained in that ids within the context of a session remain valid independently of other connections
-    /// or sessions being open at the same time. Usually an external application will first determine with which session to
-    /// interact. Once that is clear, the application will work more or less exclusively on that session. Traversing the object
-    /// hierarchy from the GuiApplication to the user interface elements, it is the session among whose children the highest
-    /// level visible objects can be found. In contrast to objects like buttons or text fields, the session remains valid until
-    /// the corresponding main window has been closed, whereas buttons, for example, are destroyed during each server
-    /// communication.
-    GuiSession(GuiSession),
-    /// GuiShell is an abstract object whose interface is supported by all the controls. GuiShell extends the GuiVContainer
-    /// Object. The type prefix is shell, the name is the last part of the id, shell\[n\].
-    GuiShell(GuiShell),
-    /// This container represents non-scrollable subscreens. It does not have any functionality apart from to the inherited
-    /// interfaces. GuiSimpleContainer extends the GuiVContainer Object. The type prefix is sub, the name is is generated
-    /// from the data dictionary settings.
-    GuiSimpleContainer(GuiSimpleContainer),
-    /// GuiSplit extends the GuiShell Object.
-    GuiSplit(GuiSplit),
-    /// The GuiSplitterContainer represents the dynpro splitter element, which was introduced in the Web Application Server
-    /// ABAP in NetWeaver 7.1. The dynpro splitter element is similar to the activeX based splitter control, but it is a
-    /// plain dynpro element.
-    GuiSplitterContainer(GuiSplitterContainer),
-    /// For the stage control only basic members from GuiShell are available. Recording and playback is not possible.
-    GuiStage(GuiStage),
-    /// GuiStatusbar represents the message displaying part of the status bar on the bottom of the SAP GUI window. It does
-    /// not include the system and login information displayed in the rightmost area of the status bar as these are available
-    /// from the GuiSessionInfo object. GuiStatusbar extends the GuiVComponent Object. The type prefix is sbar.
-    GuiStatusbar(GuiStatusbar),
-    /// The parent of the GuiStatusPane objects is the status bar (see also GuiStatusbar Object). The GuiStatusPane objects
-    /// reflect the individual areas of the status bar, for example "pane\[0\]" refers to the section of the status bar where
-    /// the messages are displayed. See also GuiStatusbar Object. The first pane of the GuiStatusBar (pane\[0\]) can have a
-    /// child of type GuiStatusBarLink, if a service request link is displayed.
-    GuiStatusPane(GuiStatusPane),
-    /// The GuiTab objects are the children of a GuiTabStrip object. GuiTab extends the GuiVContainer Object. The type prefix
-    /// is tabp, the name is the id of the tab’s button taken from SAP data dictionary.
-    GuiTab(GuiTab),
-    /// The table control is a standard dynpro element, in contrast to the GuiCtrlGridView, which looks similar. GuiTableControl
-    /// extends the GuiVContainer Object. The type prefix is tbl, the name is the fieldname taken from the SAP data dictionary.
-    GuiTableControl(GuiTableControl),
-    /// A tab strip is a container whose children are of type GuiTab. GuiTabStrip extends the GuiVContainer Object. The type
-    /// prefix is tabs, the name is the fieldname taken from the SAP data dictionary.
-    GuiTabStrip(GuiTabStrip),
-    /// The TextEdit control is a multiline edit control offering a number of possible benefits. With regard to scripting,
-    /// the possibility of protecting text parts against editing by the user is especially useful. GuiTextedit extends the
-    /// GuiShell Object.
-    GuiTextedit(GuiTextedit),
-    /// GuiTextField extends the GuiVComponent Object. The type prefix is txt, the name is the fieldname taken from the
-    /// SAP data dictionary.
-    GuiTextField(GuiTextField),
-    /// The titlebar is only displayed and exposed as a separate object in New Visual Design mode. GuiTitlebar extends the
-    /// GuiVContainer Object. The type prefix and name of GuiTitlebar are titl.
-    GuiTitlebar(GuiTitlebar),
-    /// Every GuiFrameWindow has a GuiToolbar. The GuiMainWindow has two toolbars unless the second has been turned off by
-    /// the ABAP application. In classical SAP GUI themes, the upper toolbar is called “system toolbar” or “GUI toolbar” ,
-    /// while the second toolbar is called “application toolbar”. In SAP GUI themes as of Belize and in integration scenarios
-    /// (like embedded into SAP Business Client), only a single toolbar (“merged toolbar") is displayed. Additionally, a footer
-    /// also containing buttons originally coming from the system or application toolbar may be displayed.
-    GuiToolbar(GuiToolbar),
-    /// A Tree view.
-    GuiTree(GuiTree),
-    /// The GuiUserArea comprises the area between the toolbar and status bar for windows of GuiMainWindow type and the area
-    /// between the titlebar and toolbar for modal windows, and may also be limited by docker controls. The standard dynpro
-    /// elements can be found only in this area, with the exception of buttons, which are also found in the toolbars.
-    GuiUserArea(GuiUserArea),
-    /// The GuiVComponent interface is exposed by all visual objects, such as windows, buttons or text fields. Like GuiComponent,
-    /// it is an abstract interface. Any object supporting the GuiVComponent interface also exposes the GuiComponent interface.
-    /// GuiVComponent extends the GuiComponent Object.
-    GuiVComponent(GuiVComponent),
-    /// An object exposes the GuiVContainer interface if it is both visible and can have children. It will then also expose
-    /// GuiComponent and GuiVComponent. Examples of this interface are windows and subscreens, toolbars or controls having
-    /// children, such as the splitter control. GuiVContainer extends the GuiContainer Object and the GuiVComponent Object.
-    GuiVContainer(GuiVContainer),
-    /// GuiVHViewSwitch represents the “View Switch” object that was introduced with the Belize theme in SAP GUI. The View Switch
-    /// is placed in the header area of the SAP GUI main window and can be used to select different views within an application.
-    /// Many screens can be displayed in different ways (for example, as a tree or list). To switch from one view to another in
-    /// a comfortable way, these screens may make use of the View Switch:
-    GuiVHViewSwitch(GuiVHViewSwitch),
+pub trait HasSAPType {
+    fn sap_type() -> &'static str;
+    fn sap_subtype() -> Option<&'static str>;
 }
 
-impl From<IDispatch> for SAPComponent {
-    fn from(value: IDispatch) -> Self {
-        let value = GuiComponent { inner: value };
-        if let Ok(mut kind) = value.r_type() {
-            log::debug!("Converting component {kind} to SAPComponent.");
+macro_rules! sap_type {
+    ($tgt: ident, $type: expr) => {
+        impl HasSAPType for $tgt {
+            fn sap_type() -> &'static str {
+                $type
+            }
+            fn sap_subtype() -> Option<&'static str> {
+                None
+            }
+        }
+    };
+    ($tgt: ident, $type: expr, $subtype: expr) => {
+        impl HasSAPType for $tgt {
+            fn sap_type() -> &'static str {
+                $type
+            }
+            fn sap_subtype() -> Option<&'static str> {
+                Some($subtype)
+            }
+        }
+    };
+}
+
+impl GuiComponent {
+    pub fn cast<T: HasIDispatch + HasSAPType + From<IDispatch>>(&self) -> Option<T> {
+        if let Ok(mut kind) = self.r_type() {
+            log::debug!("Converting GuiComponent to {kind}.");
             if kind.as_str() == "GuiShell" {
                 log::debug!("Kind is shell, checking subkind.");
-                if let Ok(sub_kind) = (GuiShell { inner: value.inner.clone() }).sub_type() {
+                if let Ok(sub_kind) = (GuiShell {
+                    inner: self.inner.clone(),
+                })
+                .sub_type()
+                {
                     // use subkind if a GuiShell
                     log::debug!("Subkind is {sub_kind}");
                     kind = sub_kind;
                 }
             }
-            match kind.as_str() {
-                // ! Types that extend from GuiShell are not prefixed with `Gui` as they use SubType.
-                "GuiApplication" => {
-                    SAPComponent::GuiApplication(GuiApplication { inner: value.inner })
-                }
-                "BarChart" => SAPComponent::GuiBarChart(GuiBarChart { inner: value.inner }),
-                "GuiBox" => SAPComponent::GuiBox(GuiBox { inner: value.inner }),
-                "GuiButton" => SAPComponent::GuiButton(GuiButton { inner: value.inner }),
-                "Calendar" => SAPComponent::GuiCalendar(GuiCalendar { inner: value.inner }),
-                "Chart" => SAPComponent::GuiChart(GuiChart { inner: value.inner }),
-                "GuiCheckBox" => SAPComponent::GuiCheckBox(GuiCheckBox { inner: value.inner }),
-                "ColorSelector" => {
-                    SAPComponent::GuiColorSelector(GuiColorSelector { inner: value.inner })
-                }
-                "GuiComboBox" => SAPComponent::GuiComboBox(GuiComboBox { inner: value.inner }),
-                "ComboBoxControl" => {
-                    SAPComponent::GuiComboBoxControl(GuiComboBoxControl { inner: value.inner })
-                }
-                "GuiComboBoxEntry" => {
-                    SAPComponent::GuiComboBoxEntry(GuiComboBoxEntry { inner: value.inner })
-                }
-                "GuiComponent" => SAPComponent::GuiComponent(value),
-                "GuiConnection" => {
-                    SAPComponent::GuiConnection(GuiConnection { inner: value.inner })
-                }
-                "GuiContainer" => SAPComponent::GuiContainer(GuiContainer { inner: value.inner }),
-                "ContainerShell" => {
-                    SAPComponent::GuiContainerShell(GuiContainerShell { inner: value.inner })
-                }
-                "GuiCTextField" => {
-                    SAPComponent::GuiCTextField(GuiCTextField { inner: value.inner })
-                }
-                "GuiCustomControl" => {
-                    SAPComponent::GuiCustomControl(GuiCustomControl { inner: value.inner })
-                }
-                "GuiDialogShell" => {
-                    SAPComponent::GuiDialogShell(GuiDialogShell { inner: value.inner })
-                }
-                "EAIViewer2D" => {
-                    SAPComponent::GuiEAIViewer2D(GuiEAIViewer2D { inner: value.inner })
-                }
-                "EAIViewer3D" => {
-                    SAPComponent::GuiEAIViewer3D(GuiEAIViewer3D { inner: value.inner })
-                }
-                "GuiFrameWindow" => {
-                    SAPComponent::GuiFrameWindow(GuiFrameWindow { inner: value.inner })
-                }
-                "GuiGOSShell" => SAPComponent::GuiGOSShell(GuiGOSShell { inner: value.inner }),
-                "GraphAdapt" => {
-                    SAPComponent::GuiGraphAdapt(GuiGraphAdapt { inner: value.inner })
-                }
-                "GridView" => SAPComponent::GuiGridView(GuiGridView { inner: value.inner }),
-                "HTMLViewer" => {
-                    SAPComponent::GuiHTMLViewer(GuiHTMLViewer { inner: value.inner })
-                }
-                "InputFieldControl" => {
-                    SAPComponent::GuiInputFieldControl(GuiInputFieldControl { inner: value.inner })
-                }
-                "GuiLabel" => SAPComponent::GuiLabel(GuiLabel { inner: value.inner }),
-                "GuiMainWindow" => {
-                    SAPComponent::GuiMainWindow(GuiMainWindow { inner: value.inner })
-                }
-                "Map" => SAPComponent::GuiMap(GuiMap { inner: value.inner }),
-                "GuiMenu" => SAPComponent::GuiMenu(GuiMenu { inner: value.inner }),
-                "GuiMenubar" => SAPComponent::GuiMenubar(GuiMenubar { inner: value.inner }),
-                "GuiModalWindow" => {
-                    SAPComponent::GuiModalWindow(GuiModalWindow { inner: value.inner })
-                }
-                "NetChart" => SAPComponent::GuiNetChart(GuiNetChart { inner: value.inner }),
-                "OfficeIntegration" => {
-                    SAPComponent::GuiOfficeIntegration(GuiOfficeIntegration { inner: value.inner })
-                }
-                "GuiOkCodeField" => {
-                    SAPComponent::GuiOkCodeField(GuiOkCodeField { inner: value.inner })
-                }
-                "GuiPasswordField" => {
-                    SAPComponent::GuiPasswordField(GuiPasswordField { inner: value.inner })
-                }
-                "Picture" => SAPComponent::GuiPicture(GuiPicture { inner: value.inner }),
-                "GuiRadioButton" => {
-                    SAPComponent::GuiRadioButton(GuiRadioButton { inner: value.inner })
-                }
-                "SapChart" => SAPComponent::GuiSapChart(GuiSapChart { inner: value.inner }),
-                "GuiScrollbar" => SAPComponent::GuiScrollbar(GuiScrollbar { inner: value.inner }),
-                "GuiScrollContainer" => {
-                    SAPComponent::GuiScrollContainer(GuiScrollContainer { inner: value.inner })
-                }
-                "GuiSession" => SAPComponent::GuiSession(GuiSession { inner: value.inner }),
-                "GuiShell" => SAPComponent::GuiShell(GuiShell { inner: value.inner }),
-                "GuiSimpleContainer" => {
-                    SAPComponent::GuiSimpleContainer(GuiSimpleContainer { inner: value.inner })
-                }
-                "Split" => SAPComponent::GuiSplit(GuiSplit { inner: value.inner }),
-                "SplitterContainer" => {
-                    SAPComponent::GuiSplitterContainer(GuiSplitterContainer { inner: value.inner })
-                }
-                "Stage" => SAPComponent::GuiStage(GuiStage { inner: value.inner }),
-                "GuiStatusbar" => SAPComponent::GuiStatusbar(GuiStatusbar { inner: value.inner }),
-                "GuiStatusPane" => {
-                    SAPComponent::GuiStatusPane(GuiStatusPane { inner: value.inner })
-                }
-                "GuiTab" => SAPComponent::GuiTab(GuiTab { inner: value.inner }),
-                "GuiTableControl" => {
-                    SAPComponent::GuiTableControl(GuiTableControl { inner: value.inner })
-                }
-                "GuiTabStrip" => SAPComponent::GuiTabStrip(GuiTabStrip { inner: value.inner }),
-                "Textedit" => SAPComponent::GuiTextedit(GuiTextedit { inner: value.inner }),
-                "GuiTextField" => SAPComponent::GuiTextField(GuiTextField { inner: value.inner }),
-                "GuiTitlebar" => SAPComponent::GuiTitlebar(GuiTitlebar { inner: value.inner }),
-                "GuiToolbar" => SAPComponent::GuiToolbar(GuiToolbar { inner: value.inner }),
-                "Tree" => SAPComponent::GuiTree(GuiTree { inner: value.inner }),
-                "GuiUserArea" => SAPComponent::GuiUserArea(GuiUserArea { inner: value.inner }),
-                "GuiVComponent" => {
-                    SAPComponent::GuiVComponent(GuiVComponent { inner: value.inner })
-                }
-                "GuiVContainer" => {
-                    SAPComponent::GuiVContainer(GuiVContainer { inner: value.inner })
-                }
-                "GuiVHViewSwitch" => {
-                    SAPComponent::GuiVHViewSwitch(GuiVHViewSwitch { inner: value.inner })
-                }
-                _ => SAPComponent::GuiComponent(value),
+            let target_kind = T::sap_subtype().unwrap_or(T::sap_type());
+            if kind == target_kind {
+                Some(T::from(self.inner.clone()))
+            } else {
+                None
             }
         } else {
-            SAPComponent::GuiComponent(value)
+            None
         }
-    }
-}
-
-impl From<VARIANT> for SAPComponent {
-    fn from(value: VARIANT) -> Self {
-        let idisp: &IDispatch = value.variant_into().unwrap();
-        Self::from(idisp.clone())
     }
 }
 
@@ -435,6 +124,7 @@ com_shim! {
         fn OpenConnectionByConnectionString(String) -> GuiComponent,
     }
 }
+sap_type!(GuiApplication, "GuiApplication");
 
 com_shim! {
     struct GuiBarChart: GuiVContainer + GuiVComponent + GuiContainer + GuiComponent + GuiShell {
@@ -448,6 +138,7 @@ com_shim! {
         fn SendData(String),
     }
 }
+sap_type!(GuiBarChart, "GuiShell", "BarChart");
 
 com_shim! {
     struct GuiBox: GuiVComponent + GuiComponent {
@@ -457,6 +148,7 @@ com_shim! {
         CharWidth: i32,
     }
 }
+sap_type!(GuiBox, "GuiBox");
 
 com_shim! {
     struct GuiButton: GuiVComponent + GuiComponent {
@@ -467,6 +159,7 @@ com_shim! {
         fn Press(),
     }
 }
+sap_type!(GuiButton, "GuiButton");
 
 com_shim! {
     struct GuiCalendar: GuiVContainer + GuiVComponent + GuiContainer + GuiComponent + GuiShell {
@@ -496,12 +189,14 @@ com_shim! {
         fn SelectWeek(i32, i32),
     }
 }
+sap_type!(GuiCalendar, "GuiShell", "Calendar");
 
 com_shim! {
     struct GuiChart: GuiVContainer + GuiVComponent + GuiContainer + GuiComponent + GuiShell {
         fn ValueChange(i32, i32, String, String, bool, String, String, i32),
     }
 }
+sap_type!(GuiChart, "GuiShell", "Chart");
 
 com_shim! {
     struct GuiCheckBox: GuiVComponent + GuiComponent {
@@ -521,6 +216,7 @@ com_shim! {
         fn GetListPropertyNonRec(String) -> String,
     }
 }
+sap_type!(GuiCheckBox, "GuiCheckBox");
 
 com_shim! {
     struct GuiCollection {
@@ -529,7 +225,7 @@ com_shim! {
         r#Type: String,
         TypeAsNumber: i32,
 
-        // TODO fn Add(Variant),
+        // TODO fn Add(&IDispatch),
         fn ElementAt(i32) -> GuiComponent,
     }
 }
@@ -539,6 +235,7 @@ com_shim! {
         fn ChangeSelection(i16),
     }
 }
+sap_type!(GuiColorSelector, "GuiShell", "ColorSelector");
 
 com_shim! {
     struct GuiComboBox: GuiVComponent + GuiComponent {
@@ -564,6 +261,7 @@ com_shim! {
         fn SetKeySpace(),
     }
 }
+sap_type!(GuiComboBox, "GuiComboBox");
 
 com_shim! {
     struct GuiComboBoxControl: GuiVComponent + GuiVContainer + GuiComponent + GuiContainer + GuiShell {
@@ -577,6 +275,7 @@ com_shim! {
         fn FireSelected(),
     }
 }
+sap_type!(GuiComboBoxControl, "GuiShell", "ComboBoxControl");
 
 com_shim! {
     struct GuiComboBoxEntry {
@@ -585,6 +284,7 @@ com_shim! {
         Value: String,
     }
 }
+sap_type!(GuiComboBoxEntry, "GuiComboBoxEntry");
 
 com_shim! {
     struct GuiComponent {
@@ -595,6 +295,7 @@ com_shim! {
         TypeAsNumber: i32,
     }
 }
+sap_type!(GuiComponent, "GuiComponent");
 
 com_shim! {
     struct GuiComponentCollection {
@@ -619,6 +320,7 @@ com_shim! {
         fn CloseSession(String),
     }
 }
+sap_type!(GuiConnection, "GuiConnection");
 
 com_shim! {
     struct GuiContainer: GuiComponent {
@@ -627,16 +329,19 @@ com_shim! {
         fn FindById(String) -> GuiComponent,
     }
 }
+sap_type!(GuiContainer, "GuiContainer");
 
 com_shim! {
     struct GuiContainerShell: GuiVContainer + GuiVComponent + GuiContainer + GuiComponent + GuiShell {
         AccDescription: String,
     }
 }
+sap_type!(GuiContainerShell, "GuiShell", "ContainerShell");
 
 com_shim! {
     struct GuiCTextField: GuiTextField + GuiVComponent + GuiComponent { }
 }
+sap_type!(GuiCTextField, "GuiCTextField");
 
 com_shim! {
     struct GuiCustomControl: GuiVContainer + GuiVComponent + GuiContainer + GuiComponent {
@@ -646,6 +351,7 @@ com_shim! {
         CharWidth: i32,
     }
 }
+sap_type!(GuiCustomControl, "GuiCustomControl");
 
 com_shim! {
     struct GuiDialogShell: GuiVContainer + GuiVComponent + GuiContainer + GuiComponent {
@@ -654,6 +360,7 @@ com_shim! {
         fn Close(),
     }
 }
+sap_type!(GuiDialogShell, "GuiDialogShell");
 
 com_shim! {
     struct GuiDockShell: GuiVContainer + GuiVComponent + GuiContainer + GuiComponent {
@@ -672,10 +379,12 @@ com_shim! {
         fn annotationTextRequest(String),
     }
 }
+sap_type!(GuiEAIViewer2D, "GuiShell", "EAIViewer2D");
 
 com_shim! {
     struct GuiEAIViewer3D: GuiVContainer + GuiVComponent + GuiContainer + GuiComponent + GuiShell { }
 }
+sap_type!(GuiEAIViewer3D, "GuiShell", "EAIViewer3D");
 
 com_shim! {
     struct GuiFrameWindow: GuiVContainer + GuiVComponent + GuiContainer + GuiComponent {
@@ -702,14 +411,17 @@ com_shim! {
         fn TabForward(),
     }
 }
+sap_type!(GuiFrameWindow, "GuiFrameWindow");
 
 com_shim! {
     struct GuiGOSShell: GuiVContainer + GuiVComponent + GuiContainer + GuiComponent { }
 }
+sap_type!(GuiGOSShell, "GuiGOSShell");
 
 com_shim! {
     struct GuiGraphAdapt: GuiVComponent + GuiVContainer + GuiContainer + GuiComponent + GuiShell { }
 }
+sap_type!(GuiGraphAdapt, "GuiShell", "GraphAdapt");
 
 com_shim! {
     struct GuiGridView: GuiVComponent + GuiVContainer + GuiComponent + GuiContainer + GuiShell {
@@ -808,6 +520,7 @@ com_shim! {
         fn TriggerModified(),
     }
 }
+sap_type!(GuiGridView, "GuiShell", "GridView");
 
 com_shim! {
     struct GuiHTMLViewer: GuiVComponent + GuiVContainer + GuiComponent + GuiContainer + GuiShell {
@@ -819,6 +532,7 @@ com_shim! {
         fn SapEvent(String, String, String),
     }
 }
+sap_type!(GuiHTMLViewer, "GuiShell", "HTMLViewer");
 
 com_shim! {
     struct GuiInputFieldControl: GuiVComponent + GuiVContainer + GuiComponent + GuiContainer + GuiShell {
@@ -834,6 +548,7 @@ com_shim! {
         fn Submit(),
     }
 }
+sap_type!(GuiInputFieldControl, "GuiShell", "InputFieldControl");
 
 com_shim! {
     struct GuiLabel: GuiVComponent + GuiComponent {
@@ -859,6 +574,7 @@ com_shim! {
         fn GetListPropertyNonRec(String) -> String,
     }
 }
+sap_type!(GuiLabel, "GuiLabel");
 
 com_shim! {
     struct GuiMainWindow: GuiFrameWindow + GuiVComponent + GuiVContainer + GuiContainer + GuiComponent {
@@ -871,20 +587,24 @@ com_shim! {
         fn ResizeWorkingPaneEx(i32, i32, bool),
     }
 }
+sap_type!(GuiMainWindow, "GuiMainWindow");
 
 com_shim! {
     struct GuiMap: GuiVComponent + GuiVContainer + GuiComponent + GuiContainer + GuiShell { }
 }
+sap_type!(GuiMap, "GuiShell", "Map");
 
 com_shim! {
     struct GuiMenu: GuiVContainer + GuiVComponent + GuiContainer + GuiComponent {
         fn Select(),
     }
 }
+sap_type!(GuiMenu, "GuiMenu");
 
 com_shim! {
     struct GuiMenubar: GuiVContainer + GuiVComponent + GuiContainer + GuiComponent { }
 }
+sap_type!(GuiMenubar, "GuiMenubar");
 
 com_shim! {
     struct GuiMessageWindow: GuiVComponent + GuiComponent {
@@ -907,6 +627,7 @@ com_shim! {
         fn PopupDialogText() -> String,
     }
 }
+sap_type!(GuiModalWindow, "GuiModalWindow");
 
 com_shim! {
     struct GuiNetChart: GuiVComponent + GuiVContainer + GuiComponent + GuiContainer + GuiShell {
@@ -918,6 +639,7 @@ com_shim! {
         fn SendData(String),
     }
 }
+sap_type!(GuiNetChart, "GuiShell", "NetChart");
 
 com_shim! {
     struct GuiOfficeIntegration: GuiVContainer + GuiVComponent + GuiContainer + GuiComponent + GuiShell {
@@ -932,6 +654,7 @@ com_shim! {
         fn SetDocument(i32, String),
     }
 }
+sap_type!(GuiOfficeIntegration, "GuiShell", "OfficeIntegration");
 
 com_shim! {
     struct GuiOkCodeField: GuiVComponent + GuiComponent {
@@ -940,10 +663,12 @@ com_shim! {
         fn PressF1(),
     }
 }
+sap_type!(GuiOkCodeField, "GuiOkCodeField");
 
 com_shim! {
     struct GuiPasswordField: GuiTextField + GuiVComponent + GuiComponent { }
 }
+sap_type!(GuiPasswordField, "GuiPasswordField");
 
 com_shim! {
     struct GuiPicture: GuiVComponent + GuiVContainer + GuiComponent + GuiContainer + GuiShell {
@@ -961,6 +686,7 @@ com_shim! {
         fn DoubleClickPictureArea(i32, i32),
     }
 }
+sap_type!(GuiPicture, "GuiShell", "Picture");
 
 com_shim! {
     struct GuiRadioButton: GuiVComponent + GuiComponent {
@@ -981,10 +707,12 @@ com_shim! {
         fn Select(),
     }
 }
+sap_type!(GuiRadioButton, "GuiRadioButton");
 
 com_shim! {
     struct GuiSapChart: GuiVComponent + GuiVContainer + GuiComponent + GuiContainer + GuiShell { }
 }
+sap_type!(GuiSapChart, "GuiShell", "SapChart");
 
 com_shim! {
     struct GuiScrollbar {
@@ -995,6 +723,7 @@ com_shim! {
         Range: i32,
     }
 }
+sap_type!(GuiScrollbar, "GuiScrollbar");
 
 com_shim! {
     struct GuiScrollContainer: GuiVContainer + GuiVComponent + GuiContainer + GuiComponent {
@@ -1002,6 +731,7 @@ com_shim! {
         VerticalScrollbar: GuiComponent,
     }
 }
+sap_type!(GuiScrollContainer, "GuiScrollContainer");
 
 com_shim! {
     struct GuiSession: GuiContainer + GuiComponent {
@@ -1050,6 +780,7 @@ com_shim! {
         fn UnlockSessionUI(),
     }
 }
+sap_type!(GuiSession, "GuiSession");
 
 com_shim! {
     struct GuiSessionInfo {
@@ -1093,6 +824,7 @@ com_shim! {
         fn SelectContextMenuItemByText(String),
     }
 }
+sap_type!(GuiShell, "GuiShell");
 
 com_shim! {
     struct GuiSimpleContainer: GuiVContainer + GuiVComponent + GuiContainer + GuiComponent {
@@ -1109,6 +841,7 @@ com_shim! {
         fn GetListPropertyNonRec(String) -> String,
     }
 }
+sap_type!(GuiSimpleContainer, "GuiSimpleContainer");
 
 com_shim! {
     struct GuiSplit: GuiVContainer + GuiVComponent + GuiContainer + GuiComponent + GuiShell {
@@ -1120,6 +853,7 @@ com_shim! {
         fn SetRowSize(i32, i32),
     }
 }
+sap_type!(GuiSplit, "GuiShell", "Split");
 
 com_shim! {
     struct GuiSplitterContainer: GuiVContainer + GuiVComponent + GuiComponent + GuiContainer + GuiShell {
@@ -1127,6 +861,7 @@ com_shim! {
         mut SashPosition: i32,
     }
 }
+sap_type!(GuiSplitterContainer, "GuiShell", "SplitterContainer");
 
 com_shim! {
     struct GuiStage: GuiVComponent + GuiVContainer + GuiContainer + GuiShell + GuiComponent {
@@ -1135,6 +870,7 @@ com_shim! {
         fn SelectItems(String),
     }
 }
+sap_type!(GuiStage, "GuiShell", "Stage");
 
 com_shim! {
     struct GuiStatusbar: GuiVComponent + GuiVContainer + GuiComponent + GuiContainer {
@@ -1151,6 +887,7 @@ com_shim! {
         fn ServiceRequestClick(),
     }
 }
+sap_type!(GuiStatusbar, "GuiStatusbar");
 
 com_shim! {
     struct GuiStatusBarLink: GuiVComponent + GuiComponent {
@@ -1163,6 +900,7 @@ com_shim! {
         Children: GuiComponentCollection,
     }
 }
+sap_type!(GuiStatusPane, "GuiStatusPane");
 
 com_shim! {
     struct GuiTab: GuiVContainer + GuiVComponent + GuiContainer + GuiComponent {
@@ -1170,6 +908,7 @@ com_shim! {
         fn Select(),
     }
 }
+sap_type!(GuiTab, "GuiTab");
 
 com_shim! {
     struct GuiTableColumn: GuiComponentCollection {
@@ -1208,6 +947,7 @@ com_shim! {
         fn SelectAllColumns(),
     }
 }
+sap_type!(GuiTableControl, "GuiTableControl");
 
 com_shim! {
     struct GuiTableRow: GuiComponentCollection {
@@ -1226,6 +966,7 @@ com_shim! {
         SelectedTab: GuiComponent,
     }
 }
+sap_type!(GuiTabStrip, "GuiTabStrip");
 
 com_shim! {
     struct GuiTextedit: GuiShell + GuiVComponent + GuiVContainer + GuiContainer + GuiComponent {
@@ -1261,6 +1002,7 @@ com_shim! {
         fn SingleFileDropped(String),
     }
 }
+sap_type!(GuiTextedit, "GuiShell", "Textedit");
 
 com_shim! {
     struct GuiTextField: GuiVComponent + GuiComponent {
@@ -1286,14 +1028,17 @@ com_shim! {
         fn GetListPropertyNonRec(String) -> String,
     }
 }
+sap_type!(GuiTextField, "GuiTextField");
 
 com_shim! {
     struct GuiTitlebar: GuiVComponent + GuiVContainer + GuiContainer + GuiComponent { }
 }
+sap_type!(GuiTitlebar, "GuiTitlebar");
 
 com_shim! {
     struct GuiToolbar: GuiVComponent + GuiVContainer + GuiContainer + GuiComponent { }
 }
+sap_type!(GuiToolbar, "GuiToolbar");
 
 com_shim! {
     struct GuiToolbarControl: GuiShell + GuiVComponent + GuiVContainer + GuiComponent + GuiContainer {
@@ -1402,6 +1147,7 @@ com_shim! {
         fn UnselectNode(String),
     }
 }
+sap_type!(GuiTree, "GuiShell", "Tree");
 
 com_shim! {
     struct GuiUserArea: GuiVContainer + GuiVComponent + GuiComponent + GuiContainer {
@@ -1413,6 +1159,7 @@ com_shim! {
         fn ListNavigate(String),
     }
 }
+sap_type!(GuiUserArea, "GuiUserArea");
 
 com_shim! {
     struct GuiUtils {
@@ -1463,6 +1210,7 @@ com_shim! {
         fn Visualize(bool) -> bool,
     }
 }
+sap_type!(GuiVComponent, "GuiVComponent");
 
 com_shim! {
     struct GuiVContainer: GuiVComponent + GuiComponent + GuiContainer {
@@ -1472,7 +1220,9 @@ com_shim! {
         fn FindByNameEx(String, String) -> GuiComponent,
     }
 }
+sap_type!(GuiVContainer, "GuiVContainer");
 
 com_shim! {
     struct GuiVHViewSwitch: GuiVComponent + GuiComponent {}
 }
+sap_type!(GuiVHViewSwitch, "GuiVHViewSwitch");
