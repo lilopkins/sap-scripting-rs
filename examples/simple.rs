@@ -34,12 +34,12 @@ fn main() -> crate::Result<()> {
     let wrapper = com_instance.sap_wrapper().expect("Couldn't get SAP wrapper");
     let engine = wrapper.scripting_engine().expect("Couldn't get GuiApplication instance");
 
-    let connection = match sap_scripting::GuiApplication_Impl::children(&engine)?.element_at(0)? {
+    let connection = match sap_scripting::GuiApplicationExt::children(&engine)?.element_at(0)? {
         SAPComponent::GuiConnection(conn) => conn,
         _ => panic!("expected connection, but got something else!"),
     };
     eprintln!("Got connection");
-    let session = match sap_scripting::GuiConnection_Impl::children(&connection)?.element_at(0)? {
+    let session = match sap_scripting::GuiConnectionExt::children(&connection)?.element_at(0)? {
         SAPComponent::GuiSession(session) => session,
         _ => panic!("expected session, but got something else!"),
     };

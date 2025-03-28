@@ -1,4 +1,4 @@
-use com_shim::{com_shim, IDispatchExt, VariantExt};
+use com_shim::{com_shim, IDispatchExt, VariantTypeExt};
 use windows::{core::*, Win32::System::Com::*, Win32::System::Variant::*};
 
 /// A wrapper over the SAP scripting engine, equivalent to CSapROTWrapper.
@@ -24,15 +24,15 @@ impl SAPWrapper {
         log::debug!("Getting UI ROT entry...");
         let result = self
             .inner
-            .call("GetROTEntry", vec![VARIANT::from_str("SAPGUI")])?;
+            .call("GetROTEntry", vec![VARIANT::variant_from("SAPGUI".to_string())])?;
 
-        let sap_gui = result.to_idispatch()?;
+        let sap_gui: &IDispatch = result.variant_into()?;
 
         log::debug!("Getting scripting engine.");
         let scripting_engine = sap_gui.call("GetScriptingEngine", vec![])?;
 
         Ok(GuiApplication {
-            inner: scripting_engine.to_idispatch()?.clone(),
+            inner: <com_shim::VARIANT as VariantTypeExt<'_, &IDispatch>>::variant_into(&scripting_engine)?.clone(),
         })
     }
 }
@@ -262,7 +262,7 @@ pub enum SAPComponent {
 impl From<IDispatch> for SAPComponent {
     fn from(value: IDispatch) -> Self {
         let value = GuiComponent { inner: value };
-        if let Ok(mut kind) = value._type() {
+        if let Ok(mut kind) = value.r_type() {
             log::debug!("Converting component {kind} to SAPComponent.");
             if kind.as_str() == "GuiShell" {
                 log::debug!("Kind is shell, checking subkind.");
@@ -403,13 +403,13 @@ impl From<IDispatch> for SAPComponent {
 
 impl From<VARIANT> for SAPComponent {
     fn from(value: VARIANT) -> Self {
-        let idisp = value.to_idispatch().unwrap();
+        let idisp: &IDispatch = value.variant_into().unwrap();
         Self::from(idisp.clone())
     }
 }
 
 com_shim! {
-    class GuiApplication: GuiContainer + GuiComponent {
+    struct GuiApplication: GuiContainer + GuiComponent {
         // TODO ActiveSession: Object,
         mut AllowSystemMessages: bool,
         mut ButtonbarVisible: bool,
@@ -431,13 +431,13 @@ com_shim! {
         fn CreateGuiCollection() -> GuiCollection,
         fn DropHistory() -> bool,
         fn Ignore(i16),
-        fn OpenConnection(String) -> SAPComponent,
-        fn OpenConnectionByConnectionString(String) -> SAPComponent,
+        fn OpenConnection(String) -> GuiComponent,
+        fn OpenConnectionByConnectionString(String) -> GuiComponent,
     }
 }
 
 com_shim! {
-    class GuiBarChart: GuiVContainer + GuiVComponent + GuiContainer + GuiComponent + GuiShell {
+    struct GuiBarChart: GuiVContainer + GuiVComponent + GuiContainer + GuiComponent + GuiShell {
         ChartCount: i32,
 
         fn BarCount(i32) -> i32,
@@ -450,7 +450,7 @@ com_shim! {
 }
 
 com_shim! {
-    class GuiBox: GuiVComponent + GuiComponent {
+    struct GuiBox: GuiVComponent + GuiComponent {
         CharHeight: i32,
         CharLeft: i32,
         CharTop: i32,
@@ -459,17 +459,17 @@ com_shim! {
 }
 
 com_shim! {
-    class GuiButton: GuiVComponent + GuiComponent {
+    struct GuiButton: GuiVComponent + GuiComponent {
         Emphasized: bool,
-        LeftLabel: SAPComponent,
-        RightLabel: SAPComponent,
+        LeftLabel: GuiComponent,
+        RightLabel: GuiComponent,
 
         fn Press(),
     }
 }
 
 com_shim! {
-    class GuiCalendar: GuiVContainer + GuiVComponent + GuiContainer + GuiComponent + GuiShell {
+    struct GuiCalendar: GuiVContainer + GuiVComponent + GuiContainer + GuiComponent + GuiShell {
         endSelection: String,
         mut FirstVisibleDate: String,
         mut FocusDate: String,
@@ -498,13 +498,13 @@ com_shim! {
 }
 
 com_shim! {
-    class GuiChart: GuiVContainer + GuiVComponent + GuiContainer + GuiComponent + GuiShell {
+    struct GuiChart: GuiVContainer + GuiVComponent + GuiContainer + GuiComponent + GuiShell {
         fn ValueChange(i32, i32, String, String, bool, String, String, i32),
     }
 }
 
 com_shim! {
-    class GuiCheckBox: GuiVComponent + GuiComponent {
+    struct GuiCheckBox: GuiVComponent + GuiComponent {
         ColorIndex: i32,
         ColorIntensified: i32,
         ColorInverse: bool,
@@ -512,8 +512,8 @@ com_shim! {
         IsLeftLabel: bool,
         IsListElement: bool,
         IsRightLabel: bool,
-        LeftLabel: SAPComponent,
-        RightLabel: SAPComponent,
+        LeftLabel: GuiComponent,
+        RightLabel: GuiComponent,
         RowText: String,
         mut Selected: bool,
 
@@ -523,30 +523,30 @@ com_shim! {
 }
 
 com_shim! {
-    class GuiCollection {
+    struct GuiCollection {
         Count: i32,
         Length: i32,
-        Type: String,
+        r#Type: String,
         TypeAsNumber: i32,
 
         // TODO fn Add(Variant),
-        fn ElementAt(i32) -> SAPComponent,
+        fn ElementAt(i32) -> GuiComponent,
     }
 }
 
 com_shim! {
-    class GuiColorSelector: GuiVContainer + GuiVComponent + GuiContainer + GuiComponent + GuiShell {
+    struct GuiColorSelector: GuiVContainer + GuiVComponent + GuiContainer + GuiComponent + GuiShell {
         fn ChangeSelection(i16),
     }
 }
 
 com_shim! {
-    class GuiComboBox: GuiVComponent + GuiComponent {
+    struct GuiComboBox: GuiVComponent + GuiComponent {
         CharHeight: i32,
         CharLeft: i32,
         CharTop: i32,
         CharWidth: i32,
-        CurListBoxEntry: SAPComponent,
+        CurListBoxEntry: GuiComponent,
         Entries: GuiCollection,
         Flushing: bool,
         Highlighted: bool,
@@ -554,9 +554,9 @@ com_shim! {
         IsListBoxActive: bool,
         IsRightLabel: bool,
         mut Key: String,
-        LeftLabel: SAPComponent,
+        LeftLabel: GuiComponent,
         Required: bool,
-        RightLabel: SAPComponent,
+        RightLabel: GuiComponent,
         ShowKey: bool,
         Text: String,
         mut Value: String,
@@ -566,8 +566,8 @@ com_shim! {
 }
 
 com_shim! {
-    class GuiComboBoxControl: GuiVComponent + GuiVContainer + GuiComponent + GuiContainer + GuiShell {
-        CurListBoxEntry: SAPComponent,
+    struct GuiComboBoxControl: GuiVComponent + GuiVContainer + GuiComponent + GuiContainer + GuiShell {
+        CurListBoxEntry: GuiComponent,
         Entries: GuiCollection,
         IsListBoxActive: bool,
         LabelText: String,
@@ -579,7 +579,7 @@ com_shim! {
 }
 
 com_shim! {
-    class GuiComboBoxEntry {
+    struct GuiComboBoxEntry {
         Key: String,
         Pos: i32,
         Value: String,
@@ -587,28 +587,28 @@ com_shim! {
 }
 
 com_shim! {
-    class GuiComponent {
+    struct GuiComponent {
         ContainerType: bool,
         Id: String,
         Name: String,
-        Type: String,
+        r#Type: String,
         TypeAsNumber: i32,
     }
 }
 
 com_shim! {
-    class GuiComponentCollection {
+    struct GuiComponentCollection {
         Count: i32,
         Length: i32,
-        Type: String,
+        r#Type: String,
         TypeAsNumber: i32,
 
-        fn ElementAt(i32) -> SAPComponent,
+        fn ElementAt(i32) -> GuiComponent,
     }
 }
 
 com_shim! {
-    class GuiConnection: GuiContainer + GuiComponent {
+    struct GuiConnection: GuiContainer + GuiComponent {
         Children: GuiComponentCollection,
         ConnectionString: String,
         Description: String,
@@ -621,25 +621,25 @@ com_shim! {
 }
 
 com_shim! {
-    class GuiContainer: GuiComponent {
+    struct GuiContainer: GuiComponent {
         Children: GuiComponentCollection,
 
-        fn FindById(String) -> SAPComponent,
+        fn FindById(String) -> GuiComponent,
     }
 }
 
 com_shim! {
-    class GuiContainerShell: GuiVContainer + GuiVComponent + GuiContainer + GuiComponent + GuiShell {
+    struct GuiContainerShell: GuiVContainer + GuiVComponent + GuiContainer + GuiComponent + GuiShell {
         AccDescription: String,
     }
 }
 
 com_shim! {
-    class GuiCTextField: GuiTextField + GuiVComponent + GuiComponent { }
+    struct GuiCTextField: GuiTextField + GuiVComponent + GuiComponent { }
 }
 
 com_shim! {
-    class GuiCustomControl: GuiVContainer + GuiVComponent + GuiContainer + GuiComponent {
+    struct GuiCustomControl: GuiVContainer + GuiVComponent + GuiContainer + GuiComponent {
         CharHeight: i32,
         CharLeft: i32,
         CharTop: i32,
@@ -648,7 +648,7 @@ com_shim! {
 }
 
 com_shim! {
-    class GuiDialogShell: GuiVContainer + GuiVComponent + GuiContainer + GuiComponent {
+    struct GuiDialogShell: GuiVContainer + GuiVComponent + GuiContainer + GuiComponent {
         Title: String,
 
         fn Close(),
@@ -656,7 +656,7 @@ com_shim! {
 }
 
 com_shim! {
-    class GuiDockShell: GuiVContainer + GuiVComponent + GuiContainer + GuiComponent {
+    struct GuiDockShell: GuiVContainer + GuiVComponent + GuiContainer + GuiComponent {
         AccDescription: String,
         DockerIsVertical: bool,
         mut DockerPixelSize: i32,
@@ -664,7 +664,7 @@ com_shim! {
 }
 
 com_shim! {
-    class GuiEAIViewer2D: GuiVContainer + GuiVComponent + GuiContainer + GuiComponent + GuiShell {
+    struct GuiEAIViewer2D: GuiVContainer + GuiVComponent + GuiContainer + GuiComponent + GuiShell {
         mut AnnoutationEnabled: i32,
         mut AnnotationMode: i16,
         mut RedliningStream: String,
@@ -674,16 +674,16 @@ com_shim! {
 }
 
 com_shim! {
-    class GuiEAIViewer3D: GuiVContainer + GuiVComponent + GuiContainer + GuiComponent + GuiShell { }
+    struct GuiEAIViewer3D: GuiVContainer + GuiVComponent + GuiContainer + GuiComponent + GuiShell { }
 }
 
 com_shim! {
-    class GuiFrameWindow: GuiVContainer + GuiVComponent + GuiContainer + GuiComponent {
+    struct GuiFrameWindow: GuiVContainer + GuiVComponent + GuiContainer + GuiComponent {
         mut ElementVisualizationMode: bool,
-        GuiFocus: SAPComponent,
+        GuiFocus: GuiComponent,
         Handle: i32,
         Iconic: bool,
-        SystemFocus: SAPComponent,
+        SystemFocus: GuiComponent,
         WorkingPaneHeight: i32,
         WorkingPaneWidth: i32,
 
@@ -704,15 +704,15 @@ com_shim! {
 }
 
 com_shim! {
-    class GuiGOSShell: GuiVContainer + GuiVComponent + GuiContainer + GuiComponent { }
+    struct GuiGOSShell: GuiVContainer + GuiVComponent + GuiContainer + GuiComponent { }
 }
 
 com_shim! {
-    class GuiGraphAdapt: GuiVComponent + GuiVContainer + GuiContainer + GuiComponent + GuiShell { }
+    struct GuiGraphAdapt: GuiVComponent + GuiVContainer + GuiContainer + GuiComponent + GuiShell { }
 }
 
 com_shim! {
-    class GuiGridView: GuiVComponent + GuiVContainer + GuiComponent + GuiContainer + GuiShell {
+    struct GuiGridView: GuiVComponent + GuiVContainer + GuiComponent + GuiContainer + GuiShell {
         ColumnCount: i32,
         // TODO mut ColumnOrder: Object,
         mut CurrentCellColumn: String,
@@ -810,7 +810,7 @@ com_shim! {
 }
 
 com_shim! {
-    class GuiHTMLViewer: GuiVComponent + GuiVContainer + GuiComponent + GuiContainer + GuiShell {
+    struct GuiHTMLViewer: GuiVComponent + GuiVContainer + GuiComponent + GuiContainer + GuiShell {
         // TODO BrowserHandle: Object,
         DocumentComplete: i32,
 
@@ -821,7 +821,7 @@ com_shim! {
 }
 
 com_shim! {
-    class GuiInputFieldControl: GuiVComponent + GuiVContainer + GuiComponent + GuiContainer + GuiShell {
+    struct GuiInputFieldControl: GuiVComponent + GuiVContainer + GuiComponent + GuiContainer + GuiShell {
         ButtonTooltip: String,
         FindButtonActivated: bool,
         HistoryCurEntry: String,
@@ -836,7 +836,7 @@ com_shim! {
 }
 
 com_shim! {
-    class GuiLabel: GuiVComponent + GuiComponent {
+    struct GuiLabel: GuiVComponent + GuiComponent {
         mut CaretPosition: i32,
         CharHeight: i32,
         CharLeft: i32,
@@ -861,7 +861,7 @@ com_shim! {
 }
 
 com_shim! {
-    class GuiMainWindow: GuiFrameWindow + GuiVComponent + GuiVContainer + GuiContainer + GuiComponent {
+    struct GuiMainWindow: GuiFrameWindow + GuiVComponent + GuiVContainer + GuiContainer + GuiComponent {
         mut ButtonbarVisible: bool,
         mut StatusbarVisible: bool,
         mut TitlebarVisible: bool,
@@ -873,21 +873,21 @@ com_shim! {
 }
 
 com_shim! {
-    class GuiMap: GuiVComponent + GuiVContainer + GuiComponent + GuiContainer + GuiShell { }
+    struct GuiMap: GuiVComponent + GuiVContainer + GuiComponent + GuiContainer + GuiShell { }
 }
 
 com_shim! {
-    class GuiMenu: GuiVContainer + GuiVComponent + GuiContainer + GuiComponent {
+    struct GuiMenu: GuiVContainer + GuiVComponent + GuiContainer + GuiComponent {
         fn Select(),
     }
 }
 
 com_shim! {
-    class GuiMenubar: GuiVContainer + GuiVComponent + GuiContainer + GuiComponent { }
+    struct GuiMenubar: GuiVContainer + GuiVComponent + GuiContainer + GuiComponent { }
 }
 
 com_shim! {
-    class GuiMessageWindow: GuiVComponent + GuiComponent {
+    struct GuiMessageWindow: GuiVComponent + GuiComponent {
         FocusedButton: i32,
         HelpButtonHelpText: String,
         HelpButtonText: String,
@@ -902,14 +902,14 @@ com_shim! {
 }
 
 com_shim! {
-    class GuiModalWindow: GuiFrameWindow + GuiVComponent + GuiVContainer + GuiComponent + GuiContainer {
+    struct GuiModalWindow: GuiFrameWindow + GuiVComponent + GuiVContainer + GuiComponent + GuiContainer {
         fn IsPopupDialog() -> bool,
         fn PopupDialogText() -> String,
     }
 }
 
 com_shim! {
-    class GuiNetChart: GuiVComponent + GuiVContainer + GuiComponent + GuiContainer + GuiShell {
+    struct GuiNetChart: GuiVComponent + GuiVContainer + GuiComponent + GuiContainer + GuiShell {
         LinkCount: i32,
         NodeCount: i32,
 
@@ -920,7 +920,7 @@ com_shim! {
 }
 
 com_shim! {
-    class GuiOfficeIntegration: GuiVContainer + GuiVComponent + GuiContainer + GuiComponent + GuiShell {
+    struct GuiOfficeIntegration: GuiVContainer + GuiVComponent + GuiContainer + GuiComponent + GuiShell {
         // TODO Document: Object,
         HostedApplication: i32,
 
@@ -934,7 +934,7 @@ com_shim! {
 }
 
 com_shim! {
-    class GuiOkCodeField: GuiVComponent + GuiComponent {
+    struct GuiOkCodeField: GuiVComponent + GuiComponent {
         Opened: bool,
 
         fn PressF1(),
@@ -942,11 +942,11 @@ com_shim! {
 }
 
 com_shim! {
-    class GuiPasswordField: GuiTextField + GuiVComponent + GuiComponent { }
+    struct GuiPasswordField: GuiTextField + GuiVComponent + GuiComponent { }
 }
 
 com_shim! {
-    class GuiPicture: GuiVComponent + GuiVContainer + GuiComponent + GuiContainer + GuiShell {
+    struct GuiPicture: GuiVComponent + GuiVContainer + GuiComponent + GuiContainer + GuiShell {
         AltText: String,
         DisplayMode: String,
         Icon: String,
@@ -963,7 +963,7 @@ com_shim! {
 }
 
 com_shim! {
-    class GuiRadioButton: GuiVComponent + GuiComponent {
+    struct GuiRadioButton: GuiVComponent + GuiComponent {
         CharHeight: i32,
         CharLeft: i32,
         CharTop: i32,
@@ -974,8 +974,8 @@ com_shim! {
         GroupPos: i32,
         IsLeftLabel: bool,
         IsRightLabel: bool,
-        LeftLabel: SAPComponent,
-        RightLabel: SAPComponent,
+        LeftLabel: GuiComponent,
+        RightLabel: GuiComponent,
         Selected: bool,
 
         fn Select(),
@@ -983,11 +983,11 @@ com_shim! {
 }
 
 com_shim! {
-    class GuiSapChart: GuiVComponent + GuiVContainer + GuiComponent + GuiContainer + GuiShell { }
+    struct GuiSapChart: GuiVComponent + GuiVContainer + GuiComponent + GuiContainer + GuiShell { }
 }
 
 com_shim! {
-    class GuiScrollbar {
+    struct GuiScrollbar {
         Maximum: i32,
         Minimum: i32,
         PageSize: i32,
@@ -997,17 +997,17 @@ com_shim! {
 }
 
 com_shim! {
-    class GuiScrollContainer: GuiVContainer + GuiVComponent + GuiContainer + GuiComponent {
-        HorizontalScrollbar: SAPComponent,
-        VerticalScrollbar: SAPComponent,
+    struct GuiScrollContainer: GuiVContainer + GuiVComponent + GuiContainer + GuiComponent {
+        HorizontalScrollbar: GuiComponent,
+        VerticalScrollbar: GuiComponent,
     }
 }
 
 com_shim! {
-    class GuiSession: GuiContainer + GuiComponent {
+    struct GuiSession: GuiContainer + GuiComponent {
         mut AccEnhancedTabChain: bool,
         mut AccSymbolReplacement: bool,
-        ActiveWindow: SAPComponent,
+        ActiveWindow: GuiComponent,
         mut Busy: bool,
         // TODO mut ErrorList: GuiCollection,
         Info: GuiSessionInfo,
@@ -1039,7 +1039,7 @@ com_shim! {
         fn CreateSession(),
         fn EnableJawsEvents(),
         fn EndTransaction(),
-        fn FindByPosition(i32, i32) -> SAPComponent,
+        fn FindByPosition(i32, i32) -> GuiComponent,
         fn GetIconResourceName(String) -> String,
         fn GetObjectTree(String) -> String,
         fn GetVKeyDescription(i32) -> String,
@@ -1052,7 +1052,7 @@ com_shim! {
 }
 
 com_shim! {
-    class GuiSessionInfo {
+    struct GuiSessionInfo {
         ApplicationServer: String,
         Client: String,
         Codepage: i32,
@@ -1081,7 +1081,7 @@ com_shim! {
 }
 
 com_shim! {
-    class GuiShell: GuiVContainer + GuiVComponent + GuiContainer + GuiComponent {
+    struct GuiShell: GuiVContainer + GuiVComponent + GuiContainer + GuiComponent {
         AccDescription: String,
         DragDropSupported: bool,
         Handle: i32,
@@ -1095,7 +1095,7 @@ com_shim! {
 }
 
 com_shim! {
-    class GuiSimpleContainer: GuiVContainer + GuiVComponent + GuiContainer + GuiComponent {
+    struct GuiSimpleContainer: GuiVContainer + GuiVComponent + GuiContainer + GuiComponent {
         IsListElement: bool,
         IsStepLoop: bool,
         IsStepLoopInTableStructure: bool,
@@ -1111,7 +1111,7 @@ com_shim! {
 }
 
 com_shim! {
-    class GuiSplit: GuiVContainer + GuiVComponent + GuiContainer + GuiComponent + GuiShell {
+    struct GuiSplit: GuiVContainer + GuiVComponent + GuiContainer + GuiComponent + GuiShell {
         IsVertical: i32,
 
         fn GetColSize(i32) -> i32,
@@ -1122,14 +1122,14 @@ com_shim! {
 }
 
 com_shim! {
-    class GuiSplitterContainer: GuiVContainer + GuiVComponent + GuiComponent + GuiContainer + GuiShell {
+    struct GuiSplitterContainer: GuiVContainer + GuiVComponent + GuiComponent + GuiContainer + GuiShell {
         IsVertical: bool,
         mut SashPosition: i32,
     }
 }
 
 com_shim! {
-    class GuiStage: GuiVComponent + GuiVContainer + GuiContainer + GuiShell + GuiComponent {
+    struct GuiStage: GuiVComponent + GuiVContainer + GuiContainer + GuiShell + GuiComponent {
         fn ContextMenu(String),
         fn DoubleClick(String),
         fn SelectItems(String),
@@ -1137,7 +1137,7 @@ com_shim! {
 }
 
 com_shim! {
-    class GuiStatusbar: GuiVComponent + GuiVContainer + GuiComponent + GuiContainer {
+    struct GuiStatusbar: GuiVComponent + GuiVContainer + GuiComponent + GuiContainer {
         Handle: i32,
         MessageAsPopup: bool,
         MessageHasLongText: i32,
@@ -1153,26 +1153,26 @@ com_shim! {
 }
 
 com_shim! {
-    class GuiStatusBarLink: GuiVComponent + GuiComponent {
+    struct GuiStatusBarLink: GuiVComponent + GuiComponent {
         fn Press(),
     }
 }
 
 com_shim! {
-    class GuiStatusPane: GuiVComponent + GuiComponent {
+    struct GuiStatusPane: GuiVComponent + GuiComponent {
         Children: GuiComponentCollection,
     }
 }
 
 com_shim! {
-    class GuiTab: GuiVContainer + GuiVComponent + GuiContainer + GuiComponent {
+    struct GuiTab: GuiVContainer + GuiVComponent + GuiContainer + GuiComponent {
         fn ScrollToLeft(),
         fn Select(),
     }
 }
 
 com_shim! {
-    class GuiTableColumn: GuiComponentCollection {
+    struct GuiTableColumn: GuiComponentCollection {
         DefaultTooltip: String,
         Fixed: bool,
         IconName: String,
@@ -1183,7 +1183,7 @@ com_shim! {
 }
 
 com_shim! {
-    class GuiTableControl: GuiVContainer + GuiVComponent + GuiContainer + GuiComponent {
+    struct GuiTableControl: GuiVContainer + GuiVComponent + GuiContainer + GuiComponent {
         CharHeight: i32,
         CharLeft: i32,
         CharTop: i32,
@@ -1192,43 +1192,43 @@ com_shim! {
         Columns: GuiCollection,
         CurrentCol: i32,
         CurrentRow: i32,
-        HorizontalScrollbar: SAPComponent,
+        HorizontalScrollbar: GuiComponent,
         RowCount: i32,
         Rows: GuiCollection,
         // TODO RowSelectMode: GuiTableSelectionType,
         TableFieldName: String,
-        VerticalScrollbar: SAPComponent,
+        VerticalScrollbar: GuiComponent,
         VisibleRowCount: i32,
 
         fn ConfigureLayout(),
         fn DeselectAllColumns(),
         fn GetAbsoluteRow(i32) -> GuiTableRow,
-        fn GetCell(i32, i32) -> SAPComponent,
+        fn GetCell(i32, i32) -> GuiComponent,
         fn ReorderTable(String),
         fn SelectAllColumns(),
     }
 }
 
 com_shim! {
-    class GuiTableRow: GuiComponentCollection {
+    struct GuiTableRow: GuiComponentCollection {
         Selectable: bool,
         mut Selected: bool,
     }
 }
 
 com_shim! {
-    class GuiTabStrip: GuiVContainer + GuiVComponent + GuiContainer + GuiComponent {
+    struct GuiTabStrip: GuiVContainer + GuiVComponent + GuiContainer + GuiComponent {
         CharHeight: i32,
         CharLeft: i32,
         CharTop: i32,
         CharWidth: i32,
-        LeftTab: SAPComponent,
-        SelectedTab: SAPComponent,
+        LeftTab: GuiComponent,
+        SelectedTab: GuiComponent,
     }
 }
 
 com_shim! {
-    class GuiTextedit: GuiShell + GuiVComponent + GuiVContainer + GuiContainer + GuiComponent {
+    struct GuiTextedit: GuiShell + GuiVComponent + GuiVContainer + GuiContainer + GuiComponent {
         CurrentColumn: i32,
         CurrentLine: i32,
         mut FirstVisibleLine: i32,
@@ -1263,7 +1263,7 @@ com_shim! {
 }
 
 com_shim! {
-    class GuiTextField: GuiVComponent + GuiComponent {
+    struct GuiTextField: GuiVComponent + GuiComponent {
         mut CaretPosition: i32,
         DisplayedText: String,
         Highlighted: bool,
@@ -1276,11 +1276,11 @@ com_shim! {
         IsListElement: bool,
         IsOField: bool,
         IsRightLabel: bool,
-        LeftLabel: SAPComponent,
+        LeftLabel: GuiComponent,
         MaxLength: i32,
         Numerical: bool,
         Required: bool,
-        RightLabel: SAPComponent,
+        RightLabel: GuiComponent,
 
         fn GetListProperty(String) -> String,
         fn GetListPropertyNonRec(String) -> String,
@@ -1288,15 +1288,15 @@ com_shim! {
 }
 
 com_shim! {
-    class GuiTitlebar: GuiVComponent + GuiVContainer + GuiContainer + GuiComponent { }
+    struct GuiTitlebar: GuiVComponent + GuiVContainer + GuiContainer + GuiComponent { }
 }
 
 com_shim! {
-    class GuiToolbar: GuiVComponent + GuiVContainer + GuiContainer + GuiComponent { }
+    struct GuiToolbar: GuiVComponent + GuiVContainer + GuiContainer + GuiComponent { }
 }
 
 com_shim! {
-    class GuiToolbarControl: GuiShell + GuiVComponent + GuiVContainer + GuiComponent + GuiContainer {
+    struct GuiToolbarControl: GuiShell + GuiVComponent + GuiVContainer + GuiComponent + GuiContainer {
         ButtonCount: i32,
         FocusedButton: i32,
 
@@ -1316,7 +1316,7 @@ com_shim! {
 }
 
 com_shim! {
-    class GuiTree: GuiShell + GuiVContainer + GuiVComponent + GuiComponent + GuiContainer {
+    struct GuiTree: GuiShell + GuiVContainer + GuiVComponent + GuiComponent + GuiContainer {
         // TODO ColumnOrder: Object,
         HierarchyHeaderWidth: i32,
         SelectedNode: String,
@@ -1404,18 +1404,18 @@ com_shim! {
 }
 
 com_shim! {
-    class GuiUserArea: GuiVContainer + GuiVComponent + GuiComponent + GuiContainer {
-        HorizontalScrollbar: SAPComponent,
+    struct GuiUserArea: GuiVContainer + GuiVComponent + GuiComponent + GuiContainer {
+        HorizontalScrollbar: GuiComponent,
         IsOTFPreview: bool,
-        VerticalScrollbar: SAPComponent,
+        VerticalScrollbar: GuiComponent,
 
-        fn FindByLabel(String, String) -> SAPComponent,
+        fn FindByLabel(String, String) -> GuiComponent,
         fn ListNavigate(String),
     }
 }
 
 com_shim! {
-    class GuiUtils {
+    struct GuiUtils {
         MESSAGE_OPTION_OK: i32,
         MESSAGE_OPTION_OKCANCEL: i32,
         MESSAGE_OPTION_YESNO: i32,
@@ -1438,7 +1438,7 @@ com_shim! {
 }
 
 com_shim! {
-    class GuiVComponent: GuiComponent {
+    struct GuiVComponent: GuiComponent {
         AccLabelCollection: GuiComponentCollection,
         AccText: String,
         AccTextOnRequest: String,
@@ -1450,7 +1450,7 @@ com_shim! {
         IsSymbolFont: bool,
         Left: i32,
         Modified: bool,
-        ParentFrame: SAPComponent,
+        ParentFrame: GuiComponent,
         ScreenLeft: i32,
         ScreenTop: i32,
         mut Text: String,
@@ -1465,14 +1465,14 @@ com_shim! {
 }
 
 com_shim! {
-    class GuiVContainer: GuiVComponent + GuiComponent + GuiContainer {
+    struct GuiVContainer: GuiVComponent + GuiComponent + GuiContainer {
         fn FindAllByName(String, String) -> GuiComponentCollection,
         fn FindAllByNameEx(String, i32) -> GuiComponentCollection,
-        fn FindByName(String, String) -> SAPComponent,
-        fn FindByNameEx(String, String) -> SAPComponent,
+        fn FindByName(String, String) -> GuiComponent,
+        fn FindByNameEx(String, String) -> GuiComponent,
     }
 }
 
 com_shim! {
-    class GuiVHViewSwitch: GuiVComponent + GuiComponent {}
+    struct GuiVHViewSwitch: GuiVComponent + GuiComponent {}
 }
