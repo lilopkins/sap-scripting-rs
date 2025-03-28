@@ -1,4 +1,4 @@
-use com_shim::{HasIDispatch, IDispatchExt, VariantTypeExt, com_shim};
+use com_shim::{com_shim, IDispatchExt, VariantTypeExt};
 use windows::{Win32::System::Com::*, Win32::System::Variant::*, core::*};
 
 /// A wrapper over the SAP scripting engine, equivalent to CSapROTWrapper.
@@ -11,7 +11,7 @@ impl SAPWrapper {
         unsafe {
             let clsid: GUID = CLSIDFromProgID(w!("SapROTWr.SapROTWrapper"))?;
             let p_clsid: *const GUID = &clsid;
-            log::debug!("CSapROTWrapper CLSID: {:?}", clsid);
+            tracing::debug!("CSapROTWrapper CLSID: {:?}", clsid);
 
             let dispatch: IDispatch =
                 CoCreateInstance(p_clsid, None, CLSCTX_LOCAL_SERVER | CLSCTX_INPROC_SERVER)?;
@@ -21,7 +21,7 @@ impl SAPWrapper {
 
     /// Get the Scripting Engine object from this wrapper.
     pub fn scripting_engine(&self) -> crate::Result<GuiApplication> {
-        log::debug!("Getting UI ROT entry...");
+        tracing::debug!("Getting UI ROT entry...");
         let result = self.inner.call(
             "GetROTEntry",
             vec![VARIANT::variant_from("SAPGUI".to_string())],
@@ -29,7 +29,7 @@ impl SAPWrapper {
 
         let sap_gui: &IDispatch = result.variant_into()?;
 
-        log::debug!("Getting scripting engine.");
+        tracing::debug!("Getting scripting engine.");
         let scripting_engine = sap_gui.call("GetScriptingEngine", vec![])?;
 
         Ok(GuiApplication {
@@ -47,7 +47,7 @@ pub trait HasSAPType {
 }
 
 macro_rules! sap_type {
-    ($tgt: ident, $type: expr) => {
+    ($tgt: ty, $type: expr) => {
         impl HasSAPType for $tgt {
             fn sap_type() -> &'static str {
                 $type
@@ -57,7 +57,7 @@ macro_rules! sap_type {
             }
         }
     };
-    ($tgt: ident, $type: expr, $subtype: expr) => {
+    ($tgt: ty, $type: expr, $subtype: expr) => {
         impl HasSAPType for $tgt {
             fn sap_type() -> &'static str {
                 $type
@@ -70,24 +70,26 @@ macro_rules! sap_type {
 }
 
 impl GuiComponent {
-    pub fn cast<T: HasIDispatch + HasSAPType + From<IDispatch>>(&self) -> Option<T> {
+    pub fn downcast<Tgt>(&self) -> Option<Tgt>
+    where
+        Tgt: HasSAPType + From<IDispatch>,
+    {
         if let Ok(mut kind) = self.r_type() {
-            log::debug!("Converting GuiComponent to {kind}.");
+            tracing::debug!("GuiComponent is {kind}.");
             if kind.as_str() == "GuiShell" {
-                log::debug!("Kind is shell, checking subkind.");
                 if let Ok(sub_kind) = (GuiShell {
                     inner: self.inner.clone(),
                 })
                 .sub_type()
                 {
                     // use subkind if a GuiShell
-                    log::debug!("Subkind is {sub_kind}");
+                    tracing::debug!("Subkind is {sub_kind}");
                     kind = sub_kind;
                 }
             }
-            let target_kind = T::sap_subtype().unwrap_or(T::sap_type());
+            let target_kind = Tgt::sap_subtype().unwrap_or_else(|| Tgt::sap_type());
             if kind == target_kind {
-                Some(T::from(self.inner.clone()))
+                Some(Tgt::from(self.inner.clone()))
             } else {
                 None
             }
