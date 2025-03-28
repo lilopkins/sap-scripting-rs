@@ -31,33 +31,35 @@ use sap_scripting::*;
 fn main() -> crate::Result<()> {
     // Initialise the environment.
     let com_instance = SAPComInstance::new().expect("Couldn't get COM instance");
-    let wrapper = com_instance.sap_wrapper().expect("Couldn't get SAP wrapper");
-    let engine = wrapper.scripting_engine().expect("Couldn't get GuiApplication instance");
+    let wrapper = com_instance
+        .sap_wrapper()
+        .expect("Couldn't get SAP wrapper");
+    let engine = wrapper
+        .scripting_engine()
+        .expect("Couldn't get GuiApplication instance");
 
-    let connection = match sap_scripting::GuiApplication_Impl::children(&engine)?.element_at(0)? {
-        SAPComponent::GuiConnection(conn) => conn,
-        _ => panic!("expected connection, but got something else!"),
-    };
+    let connection: GuiConnection = sap_scripting::GuiApplicationExt::children(&engine)?
+        .element_at(0)?
+        .cast()
+        .expect("expected connection, but got something else!");
     eprintln!("Got connection");
-    let session = match sap_scripting::GuiConnection_Impl::children(&connection)?.element_at(0)? {
-        SAPComponent::GuiSession(session) => session,
-        _ => panic!("expected session, but got something else!"),
-    };
+    let session: GuiSession = sap_scripting::GuiConnectionExt::children(&connection)?
+        .element_at(0)?
+        .cast()
+        .expect("expected session, but got something else!");
 
-    if let SAPComponent::GuiMainWindow(wnd) = session.find_by_id("wnd[0]".to_owned())? {
-        wnd.maximize().unwrap();
+    let wnd: GuiMainWindow = session
+        .find_by_id("wnd[0]".to_owned())?
+        .cast()
+        .expect("no window!");
+    wnd.maximize().unwrap();
 
-        if let SAPComponent::GuiOkCodeField(tbox_comp) =
-            session.find_by_id("wnd[0]/tbar[0]/okcd".to_owned())?
-        {
-            tbox_comp.set_text("/nfpl9".to_owned()).unwrap();
-            wnd.send_v_key(0).unwrap();
-        } else {
-            panic!("no ok code field!");
-        }
-    } else {
-        panic!("no window!");
-    }
+    let tbox_comp: GuiOkCodeField = session
+        .find_by_id("wnd[0]/tbar[0]/okcd".to_owned())?
+        .cast()
+        .expect("no ok code field!");
+    tbox_comp.set_text("/nfpl9".to_owned()).unwrap();
+    wnd.send_v_key(0).unwrap();
 
     Ok(())
 }
