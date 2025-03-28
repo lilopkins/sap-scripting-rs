@@ -40,23 +40,23 @@ fn main() -> crate::Result<()> {
 
     let connection: GuiConnection = sap_scripting::GuiApplicationExt::children(&engine)?
         .element_at(0)?
-        .cast()
+        .downcast()
         .expect("expected connection, but got something else!");
     eprintln!("Got connection");
     let session: GuiSession = sap_scripting::GuiConnectionExt::children(&connection)?
         .element_at(0)?
-        .cast()
+        .downcast()
         .expect("expected session, but got something else!");
 
     let wnd: GuiMainWindow = session
         .find_by_id("wnd[0]".to_owned())?
-        .cast()
+        .downcast()
         .expect("no window!");
     wnd.maximize().unwrap();
 
     let tbox_comp: GuiOkCodeField = session
         .find_by_id("wnd[0]/tbar[0]/okcd".to_owned())?
-        .cast()
+        .downcast()
         .expect("no ok code field!");
     tbox_comp.set_text("/nfpl9".to_owned()).unwrap();
     wnd.send_v_key(0).unwrap();

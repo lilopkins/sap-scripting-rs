@@ -12,6 +12,6 @@ license = "MIT"
 pretty_env_logger = "0.5.0"
 
 [dependencies]
-log = "0.4.20"
-com-shim = "0.4.1"
+com-shim = "0.4.2"
 windows = { version = "0.52.0", features = [ "Win32_System_Com", "Win32_Foundation", "Win32_System_Ole", "Win32_System_Variant" ] }
+tracing = "0.1.41"

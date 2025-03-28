@@ -4,6 +4,8 @@
 
 use windows::Win32::System::Com::*;
 
+pub use com_shim::IsA;
+
 /// The types from this library.
 pub mod types;
 
@@ -18,7 +20,7 @@ pub struct SAPComInstance;
 impl SAPComInstance {
     /// Initialise the COM environment.
     pub fn new() -> Result<Self> {
-        log::debug!("CoInitialize'ing.");
+        tracing::debug!("CoInitialize'ing.");
         unsafe {
             CoInitialize(None)?;
         }
@@ -27,7 +29,7 @@ impl SAPComInstance {
 
     /// Create an instance of the SAP wrapper
     pub fn sap_wrapper(&self) -> Result<SAPWrapper> {
-        log::debug!("New CSapROTWrapper object generating.");
+        tracing::debug!("New CSapROTWrapper object generating.");
         SAPWrapper::new()
     }
 }

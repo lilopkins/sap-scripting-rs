@@ -13,9 +13,9 @@ dependencies = [
 
 [[package]]
 name = "com-shim"
-version = "0.4.1"
+version = "0.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a78896ac301d6a8e2a5be0ab5ecfba130944ca4948767fbf2161f5fa5b32098f"
+checksum = "25918322e717c440daf236d3d1fee55c72b6d051ed5363eba7a4a72e431b7703"
 dependencies = [
  "com-shim-macro",
  "tracing",
@@ -24,9 +24,9 @@ dependencies = [
 
 [[package]]
 name = "com-shim-macro"
-version = "0.4.1"
+version = "0.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0340d8c6c302c08b57ed9e7bffacf99c36787cdc1b3f6d0a2296f50b86a86226"
+checksum = "393a39bc212bbb392a31779481aca2f05f273ec5258e436c5a07fca171427c9d"
 dependencies = [
  "heck",
  "proc-macro2",
@@ -168,8 +168,8 @@ name = "sap-scripting"
 version = "0.4.1"
 dependencies = [
  "com-shim",
- "log",
  "pretty_env_logger",
+ "tracing",
  "windows",
 ]
 
